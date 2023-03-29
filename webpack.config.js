@@ -51,4 +51,5 @@ module.exports = {
       secure: false,
     },
   },
+  devtool: "eval-source-map", // ADDED TO AVOID FOLLOWING ERROR (appearing 3x in Chrome dev console:  "DevTools failed to load source map: Could not load content for webpack://benfordapp/node_modules/@remix-run/router/dist/router.js.map: Fetch through target failed: Unsupported URL scheme; Fallback: HTTP error: status code 404, net::ERR_UNKNOWN_URL_SCHEME".  NOTE:  Addition slows down page render time
 };

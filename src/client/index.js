@@ -3,6 +3,7 @@ import { render } from "react-dom";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App.jsx";
 import axios from "axios";
+import chartBenfordResults from "./chartResults.js";
 
 // TEST --> should return {connected: "yes"} in browser itself @ "/api/test" endpoint AND in browser console @ "/" endpoint
 (async () => {
@@ -44,12 +45,12 @@ console.log(inputBodyObj);
   );
   console.log("CLIENT-SIDE api/returnData: ", typeof outputArr, outputArr);
   console.log(response.headers["content-type"]);
-  //   chartBenfordResults(outputArr); // Import this from another module
+  chartBenfordResults(outputArr); // Import this from another module
 })();
 
-// render(
-//   <BrowserRouter>
-//     <App />
-//   </BrowserRouter>,
-//   document.getElementById("root")
-// );
+render(
+  <BrowserRouter>
+    <App />
+  </BrowserRouter>,
+  document.getElementById("root")
+);
