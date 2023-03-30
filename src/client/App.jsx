@@ -1,14 +1,23 @@
 import React from "react";
 import { Route, Routes } from "react-router-dom";
-import LogInPageContainer from "./components/LogInPageContainer.jsx";
+import LandingPage from "./components/LandingPage.jsx";
+import LogIn from "./components/LogIn.jsx";
+import SignUp from "./components/SignUp.jsx";
 import MainPageContainer from "./components/MainPageContainer.jsx";
 
-const App = () => {
+const App = (props) => {
+  const { outputArr } = props;
+
   return (
     <>
       <Routes>
-        <Route path="/" element={<LogInPageContainer />} />
-        <Route path="/main" element={<MainPageContainer />} />
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<LogIn />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route
+          path="/main"
+          element={<MainPageContainer outputArr={outputArr} />}
+        />
       </Routes>
     </>
   );

@@ -1,5 +1,6 @@
 import React from "react";
 import { render } from "react-dom";
+import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App.jsx";
 import axios from "axios";
@@ -45,12 +46,21 @@ console.log(inputBodyObj);
   );
   console.log("CLIENT-SIDE api/returnData: ", typeof outputArr, outputArr);
   console.log(response.headers["content-type"]);
-  chartBenfordResults(outputArr); // Import this from another module
+  //   chartBenfordResults(outputArr); // Import this from another module
+
+  // Moved render() INSIDE of axios get request due to async nature so that outputArr can be passed down as props
+  // Also using React 18 version (newer) here, hence different syntax <-- https://www.npmjs.com/package/react-dom / https://github.com/reactwg/react-18/discussions/5
+  const root = createRoot(document.getElementById("root"));
+  root.render(
+    <BrowserRouter>
+      <App outputArr={outputArr} />
+    </BrowserRouter>
+  );
 })();
 
-render(
-  <BrowserRouter>
-    <App />
-  </BrowserRouter>,
-  document.getElementById("root")
-);
+// render(
+//     <BrowserRouter>
+//       <App />
+//     </BrowserRouter>,
+//     document.getElementById("root")
+//   );
