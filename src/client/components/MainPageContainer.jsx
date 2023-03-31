@@ -10,15 +10,20 @@ const MainPageContainer = (props) => {
   // Ensure chart is visible
   document.getElementById("chartHanger").style.display = "block";
 
+  // Invoke hiding of chart on button click below
+  function hideChart() {
+    document.getElementById("chartHanger").style.display = "none";
+  }
+
   return (
     <>
       <div>MAIN PAGE w. CHART</div>
       <Link to="/login">
-        <button>GO BACK TO LOGIN</button>
+        <button onClick={hideChart}>GO BACK TO LOGIN</button>
       </Link>
       <br></br> <br></br>
       <Link to="/">
-        <button>GO TO LANDING PAGE</button>
+        <button onClick={hideChart}>GO TO LANDING PAGE</button>
       </Link>
     </>
   );

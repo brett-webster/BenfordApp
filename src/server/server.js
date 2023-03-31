@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const path = require("path");
+const fs = require("fs");
 
 // Node.js equivalent of localStorage on client-side (attached to window)
 const LocalStorage = require("node-localstorage").LocalStorage;
@@ -51,6 +52,103 @@ app.post("/api/input", (req, res) => {
 app.get("/api/returnData", (req, res) => {
   const returnData = localStorage.getItem("processedData");
   return res.status(200).json(returnData);
+});
+
+// -----------
+
+// MOVE below to controllers w/ middleware once ready
+// SignUp endpoint
+app.post("/api/signup", (req, res, next) => {
+  req.body.alpha = "beta";
+  console.log("NEWUSER req.body on Server-side: ", req.body);
+  const { email, username, password } = req.body.newUser; // destructure req.body object sent from client
+
+  // Saving new user to temporary 'database' -- modularize this once functional
+  // Test whether duplicate email or username -- if so, send message back
+  // If not duplicate, add to database (cached object w/ username as key & array [email, password] as value)
+  // Read from current 'database' file, grabbing state; compare vs. input username (assuming this to be unique ID since need to pick btwn username/email)
+  // Full path needed here, async not needed
+  const dbObjectString = fs.readFileSync(
+    path.resolve(__dirname, "./db.json"),
+    "utf-8"
+  );
+  dbObject = JSON.parse(dbObjectString);
+
+  // TEST
+  console.log(
+    typeof dbObject,
+    dbObject,
+    dbObject["abc"],
+    typeof dbObject["max"],
+    dbObject["max"],
+    dbObject["brett"],
+    username,
+    dbObject[username]
+  );
+
+  let newdbObject;
+  if (dbObject[username]) {
+    console.log(
+      "Username dup, end middleware chain here & send message back to client"
+    );
+    // Send message back to client -- not truly successful, but needed to convey error back from server-side
+    const duplicateUserNameMessageForClient = "DUPLICATE USERNAME";
+    return res.status(200).json(duplicateUserNameMessageForClient);
+    // Return error here & end middleware chain
+    // return next({
+    //   status: 400,
+    //   log: "Error in userController.signUp -- userName dup NOT allowed",
+    //   message: {
+    //     err: "Error in userController.signUp -- userName dup NOT allowed",
+    //   },
+    // });
+  } else {
+    console.log(
+      "Not a dup; save new user data to DB & proceed to next middleware"
+    );
+    // Write new userName into dbObject
+    newdbObject = { ...dbObject, [username]: [email, password, ["CIKs"]] };
+    const newdbObjectString = JSON.stringify(newdbObject);
+    fs.writeFileSync(path.resolve(__dirname, "./db.json"), newdbObjectString);
+    // Allow user to go to next middleware which processes Benford data
+    // Ultimately return successful 200 status below
+  }
+  return res.status(200).json(newdbObject);
+  //   return res.status(200).json(req.body);
+});
+
+// Login endpoint
+app.post("/api/login", (req, res) => {
+  req.body.gamma = "G";
+  console.log("CURRENTUSER req.body on Server-side: ", req.body);
+  const { username, password } = req.body.user; // destructure req.body object sent from client
+
+  // Full path needed here, async not needed
+  const dbObjectString = fs.readFileSync(
+    path.resolve(__dirname, "./db.json"),
+    "utf-8"
+  );
+  dbObject = JSON.parse(dbObjectString);
+  //   console.log(typeof dbObject, dbObject);
+
+  console.log(
+    "TEST: ",
+    username,
+    dbObject[username],
+    password
+    // dbObject[username][1]  // throws error if username non-existent
+  );
+  if (dbObject[username] && dbObject[username][1] === password) {
+    console.log("VALID login credentials");
+    // Allow user to go to next middleware which processes Benford data
+    // Ultimately return successful 200 status below
+  } else {
+    console.log("INVALID Username/Password");
+    // Send message back to client -- not truly successful, but needed to convey error back from server-side
+    const InvalidCredsMessageForClient = "INVALID Username/Password";
+    return res.status(200).json(InvalidCredsMessageForClient);
+  }
+  return res.status(200).json(req.body);
 });
 
 // -----------

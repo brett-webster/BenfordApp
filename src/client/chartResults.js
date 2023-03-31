@@ -27,7 +27,7 @@ const chartBenfordResults = (outputArr) => {
     y: yValuesObserved,
     type: "bar",
     marker: {
-      color: "rgb(158,202,225)",
+      color: "rgb(158,202,0)",
       opacity: 0.6,
       line: {
         color: "rgb(8,48,107)",

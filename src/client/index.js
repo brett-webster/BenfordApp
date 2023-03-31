@@ -52,9 +52,11 @@ console.log(inputBodyObj);
   // Also using React 18 version (newer) here, hence different syntax <-- https://www.npmjs.com/package/react-dom / https://github.com/reactwg/react-18/discussions/5
   const root = createRoot(document.getElementById("root"));
   root.render(
-    <BrowserRouter>
-      <App outputArr={outputArr} />
-    </BrowserRouter>
+    <React.StrictMode>
+      <BrowserRouter>
+        <App outputArr={outputArr} />
+      </BrowserRouter>
+    </React.StrictMode>
   );
 })();
 
