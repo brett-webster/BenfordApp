@@ -3,7 +3,7 @@ import { Route, Routes } from "react-router-dom";
 import LandingPage from "./components/LandingPage.jsx";
 import LogIn from "./components/LogIn.jsx";
 import SignUp from "./components/SignUp.jsx";
-import MainPageContainer from "./components/MainPageContainer.jsx";
+import MainPage from "./components/MainPage.jsx";
 
 const App = (props) => {
   const { outputArr } = props;
@@ -14,10 +14,7 @@ const App = (props) => {
         <Route exact path="/" element={<LandingPage />} />
         <Route path="/login" element={<LogIn />} />
         <Route path="/signup" element={<SignUp />} />
-        <Route
-          path="/main"
-          element={<MainPageContainer outputArr={outputArr} />}
-        />
+        <Route path="/main" element={<MainPage outputArr={outputArr} />} />
       </Routes>
     </>
   );

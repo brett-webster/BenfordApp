@@ -1,0 +1,98 @@
+.navBar {
+  background-color: rgb(175, 216, 251);
+  opacity: 0.6;
+  background-image: linear-gradient(
+    to bottom,
+    rgb(175, 216, 251),
+    rgb(243, 216, 253),
+    white
+  );
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  position: fixed;
+  display: flex;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 80px;
+}
+
+#benfordAppLogo {
+  display: flex;
+  height: 75%;
+  /* align-self: center; */
+}
+
+.navBtns {
+  background: lightblue;
+  position: absolute;
+  display: flex;
+  align-self: center;
+  right: 20px;
+}
+
+.navBtn {
+  background: lightblue;
+  border-radius: 9px;
+}
+.navBtn:hover {
+  background: royalblue;
+  cursor: pointer;
+}
+
+#benfordChartandDescLandingPage {
+  position: relative;
+  top: 50px;
+  left: 0px;
+  margin: 50px;
+}
+
+#fullLoginContainer {
+  /* position: relative; */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+#loginForm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+#fullSignupContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+#signupForm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.loginOrSigninBtn {
+  background: gainsboro;
+  border-radius: 9px;
+}
+.loginOrSigninBtn:hover {
+  background: rgb(145, 147, 153);
+  cursor: pointer;
+}
+
+#outputResultsText {
+  position: absolute;
+  bottom: 80px;
+  left: 20px;
+}
+
+/* #lockImg {
+  position: relative;
+} */

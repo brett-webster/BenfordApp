@@ -28,7 +28,7 @@ module.exports = {
       {
         test: /\.s?css$/,
         exclude: /node_modules/,
-        use: ["style-loader", "css-loader", "sass-loader"], // ORDER MATTERS HERE, RUNS RIGHT to LEFT
+        use: ["style-loader", "css-loader"], // , REMOVED "sass-loader" bc NOT USING.  ORDER MATTERS HERE, RUNS RIGHT to LEFT
       },
       {
         test: /\.(jpe?g|png|gif|svg)$/i, // ADDED THESE 3 LINES TO INCORPORATE .png IMAGE ON LANDING PAGE; CONFLICTED w/ react-hot-loader v. 4.13 & 4.6, so uninstalled latter.  Once stable, try "React Fast Refresh" as replacement for react-hot-loader --> https://github.com/pmmmwh/react-refresh-webpack-plugin/

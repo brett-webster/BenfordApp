@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import Navbar from "./Navbar.jsx";
 import lockImage from "../lockImage.png"; // ADDED "file-loader" to package.json for importing .png here & new module -> rule in webpack.config.js.  NOTE:  Conflicting dependencies required uninstalling react-hot-loader (though HRM still seems to be working)
 import axios from "axios";
 
@@ -12,7 +13,11 @@ const SignUp = () => {
   });
   const [passwordMatch, setPasswordMatch] = useState(true);
   const [userNameDup, setUserNameDup] = useState(false);
-  //   const navigate = useNavigate(); // Hook used to proceed to main Benford page upon successful login
+  const navigate = useNavigate(); // Hook used to proceed to main Benford page upon successful login
+
+  // Grab current page path and pass down props to Navbar so it renders correct button set
+  const currentPage = useLocation();
+  let currentPagePath = currentPage.pathname;
 
   function charChangeHandler(event) {
     const { name, value } = event.target; // destructure event object
@@ -45,8 +50,7 @@ const SignUp = () => {
         );
         if (response.data === "DUPLICATE USERNAME") {
           setUserNameDup(true); // Used as flag for displaying message to user
-        }
-        // else navigate("/main"); // Send user to main page on successful signup
+        } else navigate("/main"); // Send user to main page on successful signup
       })();
     }
 
@@ -65,76 +69,78 @@ const SignUp = () => {
 
   return (
     <>
-      <div className="w-screen h-screen flex items-center justify-center gap-20 size=50%">
-        <img src={lockImage} alt="lockImg" style={{ width: 30 }} />
-      </div>
-      <div>Sign Up</div>
-      <br></br>
-      {/* 4 fields here w/ onSubmit form, tied to SIGN UP only */}
-      <form onSubmit={submitFormHandler}>
-        <label>
-          {/* Email: */}
-          <input
-            type="email"
-            name="email"
-            placeholder="* Email address *"
-            value={newUser.email}
-            onChange={charChangeHandler}
-            required
-          ></input>
-        </label>
-        <br></br>
-        <label>
-          {/* Username: */}
-          <input
-            type="username"
-            name="username"
-            placeholder="* Username *"
-            value={newUser.username}
-            onChange={charChangeHandler}
-            required
-          ></input>
-        </label>
-        <br></br>
-        <label>
-          {/* Password: */}
-          <input
-            type="password"
-            name="password"
-            placeholder="* Password *"
-            value={newUser.password}
-            onChange={charChangeHandler}
-            required
-          ></input>
-        </label>
-        <br></br>
-        <label>
-          {/* Confirm Password: */}
-          <input
-            type="password"
-            name="passwordConfirm"
-            placeholder="* Confirm Password *"
-            value={newUser.passwordConfirm}
-            onChange={charChangeHandler}
-            required
-          ></input>
-        </label>
+      <Navbar currentPagePath={currentPagePath} />
+      <div id="fullLoginContainer">
+        <img src={lockImage} alt="lockImg" style={{ width: 50 }} />
         <br></br> <br></br>
-        <button type="submit">SIGN UP</button>
-        {/* <button onClick={clickTest}>SIGN UP</button> */}
-      </form>
-      <br></br> <br></br>
-      <div style={{ color: "red" }}>
-        {!passwordMatch ? "Password mismatch - PLEASE TRY AGAIN" : ""}
+        <div style={{ fontWeight: "bold", textDecorationLine: "underline" }}>
+          Sign Up
+        </div>
+        <br></br>
+        {/* 4 fields here w/ onSubmit form, tied to SIGN UP only */}
+        <form onSubmit={submitFormHandler} id="signupForm">
+          <label>
+            {/* Email: */}
+            <input
+              type="email"
+              name="email"
+              placeholder="* Email address *"
+              value={newUser.email}
+              onChange={charChangeHandler}
+              required
+            ></input>
+          </label>
+          <label>
+            {/* Username: */}
+            <input
+              type="username"
+              name="username"
+              placeholder="* Username *"
+              value={newUser.username}
+              onChange={charChangeHandler}
+              required
+            ></input>
+          </label>
+          <label>
+            {/* Password: */}
+            <input
+              type="password"
+              name="password"
+              placeholder="* Password *"
+              value={newUser.password}
+              onChange={charChangeHandler}
+              required
+            ></input>
+          </label>
+          <label>
+            {/* Confirm Password: */}
+            <input
+              type="password"
+              name="passwordConfirm"
+              placeholder="* Confirm Password *"
+              value={newUser.passwordConfirm}
+              onChange={charChangeHandler}
+              required
+            ></input>
+          </label>
+          <br></br>
+          <button type="submit" className="loginOrSigninBtn">
+            SIGN UP
+          </button>
+          {/* <button onClick={clickTest}>SIGN UP</button> */}
+        </form>
+        <br></br> <br></br>
+        <div style={{ color: "red" }}>
+          {!passwordMatch ? "Password mismatch - PLEASE TRY AGAIN" : ""}
+        </div>
+        <div style={{ color: "blue" }}>
+          {userNameDup
+            ? "Duplicate username found in database - PLEASE TRY AGAIN"
+            : ""}
+        </div>
+        <br></br>
+        <Link to="/login">Already have an account? Log In here...</Link>
       </div>
-      <div style={{ color: "blue" }}>
-        {userNameDup
-          ? "Duplicate username found in database - PLEASE TRY AGAIN"
-          : ""}
-      </div>
-      <br></br>
-      <Link to="/login">Already have an account? Log In here...</Link>
-      <br></br> <br></br>
     </>
   );
 };
