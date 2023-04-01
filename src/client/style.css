@@ -78,13 +78,27 @@
   justify-content: center;
 }
 
-.loginOrSigninBtn {
+.nonNavBtn {
   background: gainsboro;
   border-radius: 9px;
 }
-.loginOrSigninBtn:hover {
+.nonNavBtn:hover {
   background: rgb(145, 147, 153);
   cursor: pointer;
+}
+
+#companyAndDateFormSubmitContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+#companyAndDateForm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 #outputResultsText {

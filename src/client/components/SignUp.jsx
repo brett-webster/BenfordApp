@@ -34,6 +34,7 @@ const SignUp = () => {
       console.log("PASSWORD MISMATCH");
       setPasswordMatch(false);
       setNewUser({
+        ...newUser,
         email: "",
         username: "",
         password: "",
@@ -56,6 +57,7 @@ const SignUp = () => {
 
     // Reset 4 fields here, AFTER data passed from client to server
     setNewUser({
+      ...newUser,
       email: "",
       username: "",
       password: "",
@@ -124,7 +126,7 @@ const SignUp = () => {
             ></input>
           </label>
           <br></br>
-          <button type="submit" className="loginOrSigninBtn">
+          <button type="submit" className="nonNavBtn">
             SIGN UP
           </button>
           {/* <button onClick={clickTest}>SIGN UP</button> */}

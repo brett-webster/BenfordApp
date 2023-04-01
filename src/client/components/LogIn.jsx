@@ -40,7 +40,7 @@ const LogIn = () => {
     })();
 
     // Reset 2 fields here, AFTER data passed from client to server
-    setUser({ username: "", password: "" });
+    setUser({ ...user, username: "", password: "" });
   }
 
   return (
@@ -78,20 +78,18 @@ const LogIn = () => {
             ></input>
           </label>
           <br></br>
-          <button type="submit" className="loginOrSigninBtn">
+          <button type="submit" className="nonNavBtn">
             LOG IN
           </button>
           {/* <button onClick={clickTest}>LOG IN</button> */}
         </form>
         <br></br> <br></br>
         <Link to="https://www.google.com/">
-          <button className="loginOrSigninBtn">
-            SIGN IN WITH GOOGLE OAUTH
-          </button>
+          <button className="nonNavBtn">SIGN IN WITH GOOGLE OAUTH</button>
         </Link>
         <br></br>
         <Link to="/main">
-          <button className="loginOrSigninBtn">CONTINUE AS GUEST</button>
+          <button className="nonNavBtn">CONTINUE AS GUEST</button>
         </Link>
         <br></br>
         <div style={{ color: "red" }}>

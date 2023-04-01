@@ -24,27 +24,59 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-// TESTING INITIAL INTERCHANGE between CLIENT & SERVER
-const outputResult = { connected: "yes" };
-// console.log(typeof outputResult);
-// console.log("SERVER-SIDE: ", outputResult);
-// Express server:  provides API data
-app.get("/api/test", (req, res) => {
-  //   return res.status(200).send("connected YES");
-  return res.status(200).json(outputResult);
-});
+// TESTING INITIAL INTERCHANGE between CLIENT & SERVER - TO REMOVE
+// const outputResult = { connected: "yes" };
+// // console.log(typeof outputResult);
+// // console.log("SERVER-SIDE: ", outputResult);
+// // Express server:  provides API data
+// app.get("/api/test", (req, res) => {
+//   //   return res.status(200).send("connected YES");
+//   return res.status(200).json(outputResult);
+// });
 
+// TESTING INITIAL INTERCHANGE between CLIENT & SERVER - TO REMOVE
 // Receive input from client-side, process data, store in Node.js localStorage & print to terminal
-app.post("/api/input", (req, res) => {
-  console.log("SERVER-SIDE /api/input: ", req.body);
-  req.body.inputBodyObj.CIK = "ZZZZ"; // ADD leading 0s to CIK, if needed
+// app.post("/api/input", (req, res) => {
+//   console.log("SERVER-SIDE /api/input: ", req.body);
+//   req.body.inputBodyObj.CIK = "ZZZZ"; // ADD leading 0s to CIK, if needed
+//   const arr = []; // [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+//   for (let i = 0; i < 10; i++) {
+//     arr.push(Math.floor(Math.random() * 10000));
+//   }
+//   req.body.inputBodyObj.resultArr = arr;
+//   console.log("UPDATED req.body: ", req.body);
+//   localStorage.setItem("processedData", JSON.stringify(req.body.inputBodyObj));
+//   return res.status(200).json(req.body);
+// });
+
+// -----------
+
+// MOVE below items to controllers w/ middleware, once ready
+// /inputdata endpoint -- Receive input from Main component
+app.post("/api/inputdata", (req, res) => {
+  req.body.delta = "D";
+  console.log("INPUT DATA req.body on Server-side: ", req.body);
+  const { CIK, startDate, endDate } = req.body.inputObject; // destructure req.body object sent from client
+
+  // Add leading digits to CIK code, if length is less than 10 to standardize
+  let fullCIK = CIK;
+  while (fullCIK.length < 10) {
+    fullCIK = "0" + fullCIK;
+  }
+  req.body.inputObject.CIK = fullCIK;
+  console.log("Full CIK on SERVER-SIDE: ", fullCIK);
+
+  // TEMPORARY PLACEHOLDER UNTIL BACKEND ANALYSIS IS COMPLETE
+  // BACKEND ANALYSIS TO BE PART OF THIS MIDDLEWARE CHAIN using res.locals, ultimately returning an updated res.locals OR req.body...
+  // "getJSON" "confirmValidData" (return msg w. emptyDataBoolean on res.locals IF sum of array entries === 0) "processData"
   const arr = []; // [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
   for (let i = 0; i < 10; i++) {
     arr.push(Math.floor(Math.random() * 10000));
   }
-  req.body.inputBodyObj.resultArr = arr;
+  req.body.inputObject.resultArr = arr;
   console.log("UPDATED req.body: ", req.body);
-  localStorage.setItem("processedData", JSON.stringify(req.body.inputBodyObj));
+  localStorage.setItem("processedData", JSON.stringify(req.body.inputObject));
+
   return res.status(200).json(req.body);
 });
 
@@ -150,6 +182,8 @@ app.post("/api/login", (req, res) => {
   }
   return res.status(200).json(req.body);
 });
+
+// -----------
 
 // -----------
 
