@@ -1,22 +1,37 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import "../style.css";
 import benfordAppLogo from "../BenfordAppLogo.png";
+import { chartDisplayContext } from "../App.jsx"; // ADDED for useContext hook
 
-const Navbar = ({ currentPagePath }) => {
+const Navbar = ({ currentPagePath, setChartDisplayBoolean }) => {
   console.log("Navbar props: ", currentPagePath);
+
+  const chartDisplayBoolean = useContext(chartDisplayContext); // ADDED for useContext hook, pulling it in to access here
+  console.log("IN NAV -- chartDisplayBoolean: ", chartDisplayBoolean);
+  useEffect(() => {
+    console.log(
+      "useEffect --> IN NAV -- chartDisplayBoolean: ",
+      chartDisplayBoolean
+    );
+    if (chartDisplayBoolean)
+      document.getElementById("chartHanger").style.display = "block";
+    if (!chartDisplayBoolean)
+      document.getElementById("chartHanger").style.display = "none";
+  }, [chartDisplayBoolean]);
 
   function clearChartHandler() {
     console.log("Clear chart button clicked");
-    document.getElementById("chartHanger").style.display = "none";
-    document.getElementById("outputResultsText").style.display = "none";
+    // document.getElementById("chartHanger").style.display = "none";
+    // document.getElementById("outputResultsText").style.display = "none";
+    setChartDisplayBoolean(false); // Set state to remove CLEAR CHART button, tied to useContext API
   }
 
   function logoutHandler() {
     console.log("Logout selected, clearing any uncleared items");
     document.getElementById("chartHanger").style.display = "none";
-    document.getElementById("outputResultsText").style.display = "none";
-    // ** CHANGE STATE HERE **
+    // document.getElementById("outputResultsText").style.display = "none";
+    setChartDisplayBoolean(false); // ADDED 4/1 11pm -- // Set state to remove CLEAR CHART button, tied to useContext API
   }
 
   return (
@@ -42,7 +57,8 @@ const Navbar = ({ currentPagePath }) => {
         ) : (
           ""
         )}
-        {currentPagePath === "/main" ? (
+        {/* && !chartClearedBoolean */}
+        {currentPagePath === "/main" && chartDisplayBoolean ? (
           <button
             onClick={clearChartHandler}
             id="clearChartBtn"

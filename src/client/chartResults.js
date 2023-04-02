@@ -59,6 +59,9 @@ const chartBenfordResults = (outputArr) => {
         color: "rgb(107, 107, 107)",
       },
     },
+    autosize: false,
+    width: 1150,
+    height: 700,
   };
 
   const TESTER = document.getElementById("chartHanger");

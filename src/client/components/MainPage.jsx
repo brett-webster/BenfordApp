@@ -1,12 +1,37 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Link, useLocation } from "react-router-dom";
 import Navbar from "./Navbar.jsx";
 import axios from "axios";
 import magnifyingGlassImage from "../magnifyingGlassImage.png";
 import chartBenfordResults from "../chartResults.js";
+import { chartDisplayContext } from "../App.jsx"; // ADDED for useContext hook
 
-const MainPageContainer = ({ outputArr }) => {
+const MainPage = ({ outputFullObject, setChartDisplayBoolean }) => {
   // console.log("OutputArr in MainPage: ", outputArr);
+  const {
+    resultArr,
+    company,
+    quarters,
+    maxKSdifference,
+    leadingDigit,
+    totalDigitCount,
+    sumOfLeadingDigitCount,
+    results5pcCritical,
+    results1pcCritical,
+  } = outputFullObject; // further destructure object
+
+  const chartDisplayBoolean = useContext(chartDisplayContext); // ADDED for useContext hook, pulling it in to access here
+  console.log("IN MAINPAGE -- chartDisplayBoolean: ", chartDisplayBoolean);
+  useEffect(() => {
+    console.log(
+      "useEffect --> IN MAINPAGE -- chartDisplayBoolean: ",
+      chartDisplayBoolean
+    );
+    if (chartDisplayBoolean)
+      document.getElementById("chartHanger").style.display = "block";
+    if (!chartDisplayBoolean)
+      document.getElementById("chartHanger").style.display = "none";
+  }, [chartDisplayBoolean]);
 
   // Grab current page path and pass down props to Navbar so it renders correct button set
   const currentPage = useLocation();
@@ -14,17 +39,35 @@ const MainPageContainer = ({ outputArr }) => {
 
   const [inputObject, setInputObject] = useState({
     CIK: "",
-    Company: "",
+    company: "",
     startDate: "",
     endDate: "",
   });
   const [badDateRangeBoolean, setBadDateRangeBoolean] = useState(false);
   const [outputArrayEmptyBoolean, setOutputArrayEmptyBoolean] = useState(false);
 
+  // *** DELETE BELOW ***
+  useEffect(() => {
+    const element = document.getElementById("chartHanger");
+    let children = element.childNodes;
+    console.log("CHILDREN: ", children.length, children);
+  });
+  // useEffect(() => {
+  //   console.log("RENDERING, hoping chart is gone...");
+  // }, [chartDisplayBoolean]);
+
   // Ensure chart & results are visible
-  document.getElementById("chartHanger").style.display = "block";
-  document.getElementById("chartHanger").style.display = "none"; // REMOVE
+  // document.getElementById("chartHanger").style.display = "block";
+  // document.getElementById("chartHanger").style.display = "none"; // REMOVE
   // document.getElementById("outputResultsText").style.display = "block";
+
+  // if (chartDisplayBoolean) {
+  //   document.getElementById("chartHanger").style.display = "block";
+  // document.getElementById("outputResultsText").style.display = "block";
+  // } else {
+  //   document.getElementById("chartHanger").style.display = "none";
+  // document.getElementById("outputResultsText").style.display = "none";
+  // }
 
   // Invoke hiding of chart on button click below
   // function hideChart() {
@@ -42,15 +85,6 @@ const MainPageContainer = ({ outputArr }) => {
     event.preventDefault();
     console.log("Form submit button clicked, inputObject = ", inputObject);
 
-    // Add leading digits to CIK code, if length is less than 10
-    let fullCIK = inputObject.CIK.slice();
-    console.log(fullCIK);
-    for (let i = inputObject.CIK.length; i < 10; i++) {
-      fullCIK = "0" + fullCIK;
-    }
-    setInputObject({ ...inputObject, ["CIK"]: fullCIK });
-    console.log(fullCIK, inputObject.CIK);
-
     // Validate dates selected are acceptable (i.e. startDate < endDate)
     if (inputObject.startDate >= inputObject.endDate) {
       console.log("Error:  Date range is incorrect.  PLEASE TRY AGAIN");
@@ -62,9 +96,9 @@ const MainPageContainer = ({ outputArr }) => {
       // ABOVE COVERS VALID CIK BUT THAT LACKS FILINGS AND ALSO VALID CIK W/ FILINGS BUT NO NUMBERS THEREIN; LASTLY, COVERS BAD CIK
       // IN ABOVE CASE, DO NOT OUTPUT CHART, ONLY OUTPUT EMPTY RESULTS
       // Send input data to server for processing...
-      console.log("last chance: ", inputObject);
+      // MERGE w/ /api/returnData endpoint to avoid multiple server calls --> /api/inputAndreturnData
       (async () => {
-        const response = await axios.post("/api/inputdata", { inputObject });
+        const response = await axios.post("/api/inputData", { inputObject });
 
         console.log(
           "CLIENT-SIDE /api/inputdata Returned back from Server w/ revision: ",
@@ -80,11 +114,13 @@ const MainPageContainer = ({ outputArr }) => {
         }
       })();
 
+      setChartDisplayBoolean(true); //ADDED 4/1 11pm
+
       // Reset 3 fields here, AFTER data passed from client to server
       setInputObject({
         ...inputObject,
         CIK: "",
-        Company: "",
+        company: "",
         startDate: "",
         endDate: "",
       });
@@ -100,19 +136,12 @@ const MainPageContainer = ({ outputArr }) => {
     setOutputArrayEmptyBoolean(false); // Used as flag for message that user's input has yielded no numeric leading digits & therefore nothing to display, resetting here to default
   }
 
-  const summaryFindings = `For a maximum absolute difference of {maxKSdifference} (leading digit {observedMinusBenfordPercentagesAbsDiffsArr.indexOf(
-    maxKSdifference
-  )}) between the observed data & the discrete Benford-theoretical curve across {sumOfLeadingDigitCount} observed leading digits...`;
-  const results5pcCritical =
-    "Fail to reject null hypotheses at the 5% critical level --> CONCLUSION:  Potential Benford conformity";
-  // "Reject null hypotheses at the 5% critical level --> CONCLUSION:  Absence of Benford conformity, consider further research\n"
-  const results1pcCritical =
-    "Fail to reject null hypotheses at the 1% critical level --> CONCLUSION:  Potential Benford conformity";
-  // "Reject null hypotheses at the 1% critical level --> CONCLUSION:  Absence of Benford conformity, consider further research\n"
-
   return (
     <>
-      <Navbar currentPagePath={currentPagePath} />
+      <Navbar
+        currentPagePath={currentPagePath}
+        setChartDisplayBoolean={setChartDisplayBoolean}
+      />
       <div id="companyAndDateFormSubmitContainer">
         <img
           src={magnifyingGlassImage}
@@ -120,11 +149,27 @@ const MainPageContainer = ({ outputArr }) => {
           style={{ width: 50 }}
         />
         <br></br> <br></br>
-        <div style={{ fontWeight: "bold", textDecorationLine: "underline" }}>
+        <div
+          style={
+            !chartDisplayBoolean
+              ? {
+                  display: "flex",
+                  fontWeight: "bold",
+                  textDecorationLine: "underline",
+                }
+              : { display: "none" }
+          }
+        >
           Enter Company & Date Range
         </div>
         <br></br>
-        <form onSubmit={submitFormHandler} id="companyAndDateForm">
+        <form
+          onSubmit={submitFormHandler}
+          id="companyAndDateForm"
+          style={
+            !chartDisplayBoolean ? { display: "flex" } : { display: "none" }
+          }
+        >
           <label>
             {/* Company name/CIK: */}
             <input
@@ -174,11 +219,52 @@ const MainPageContainer = ({ outputArr }) => {
             : ""}
         </div>
       </div>
+      {/* Do not render chart if SUBMIT button has not yet been pressed OR CLEAR CHART button has not been clicked post-charting */}
+      <div
+      // style={chartDisplayBoolean ? { display: "flex" } : { display: "none" }}
+      >
+        {chartDisplayBoolean
+          ? chartBenfordResults(outputFullObject.resultArr)
+          : ""}
+      </div>
+      {/* {chartBenfordResults(outputArr)} */}
+      <br></br>
+      <br></br>
 
-      {chartBenfordResults(outputArr)}
-      <br></br>
-      <br></br>
-      <div id="outputResultsText">
+      {chartDisplayBoolean ? (
+        <div id="outputResultsText">
+          <div style={{ fontWeight: "bold" }}>Issuer: {company}</div>
+          <div style={{ fontWeight: "bold" }}>
+            Time Frame: {quarters} quarters
+          </div>
+          <div style={{ fontWeight: "bold" }}>
+            Highest Digit Frequency (count): {sumOfLeadingDigitCount}
+          </div>
+          <div style={{ fontWeight: "bold" }}>
+            Total Digits analyzed (count): {totalDigitCount}
+          </div>
+          <br></br>
+          <div style={{ fontWeight: "bold", textDecorationLine: "underline" }}>
+            RESULTS
+          </div>
+          <div>{`For a maximum absolute difference of ${maxKSdifference} (leading digit ${leadingDigit}) between the observed data & the discrete Benford-theoretical curve across ${totalDigitCount} observed leading digits...`}</div>
+          <br></br>
+          <div style={{ color: "red" }}>
+            {results5pcCritical === "REJECT"
+              ? "Reject null hypotheses at the 5% critical level --> CONCLUSION:  Absence of Benford conformity, consider further research"
+              : "Fail to reject null hypotheses at the 5% critical level --> CONCLUSION:  Potential Benford conformity"}
+          </div>
+          <div style={{ color: "red" }}>
+            {results1pcCritical === "REJECT"
+              ? "Reject null hypotheses at the 1% critical level --> CONCLUSION:  Absence of Benford conformity, consider further research"
+              : "Fail to reject null hypotheses at the 1% critical level --> CONCLUSION:  Potential Benford conformity"}
+          </div>
+        </div>
+      ) : (
+        ""
+      )}
+      {/* DELETE THE BELOW */}
+      {/* <div id="outputResultsText">
         <div style={{ fontWeight: "bold" }}>Issuer: GE</div>
         <div style={{ fontWeight: "bold" }}>Time Frame: X quarters</div>
         <div style={{ fontWeight: "bold" }}>Digits analyzed: 256</div>
@@ -190,8 +276,7 @@ const MainPageContainer = ({ outputArr }) => {
         <br></br>
         <div style={{ color: "red" }}>{results5pcCritical}</div>
         <div style={{ color: "red" }}>{results1pcCritical}</div>
-      </div>
-
+      </div> */}
       {/* <div>MAIN PAGE w. CHART</div>
       <Link to="/login">
         <button onClick={hideChart}>GO BACK TO LOGIN</button>
@@ -204,4 +289,4 @@ const MainPageContainer = ({ outputArr }) => {
   );
 };
 
-export default MainPageContainer;
+export default MainPage;

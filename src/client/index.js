@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, createContext } from "react";
 import { render } from "react-dom";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
@@ -36,16 +36,19 @@ import "./style.css";
 //   console.log(response.headers["content-type"]);
 // })();
 
-// Receiving final processed data back from server-side to client-side -- MOVE BELOW TO MainContainer
+// Receiving final processed data back from server-side to client-side
+// MOVE BELOW TO MainPage & merge w. /api/inputdata
+// Need to make this user-initiated vs. auto-initiated
 (async () => {
   const response = await axios.get("/api/returnData", {
     responseType: "json",
   });
-  const outputArr = JSON.parse(response.data).resultArr;
+  const outputFullObject = JSON.parse(response.data);
+  const outputArr = JSON.parse(response.data).resultArr; // REMOVE
   console.log(
     "CLIENT-SIDE /api/returnData: ",
-    typeof response.data,
-    response.data
+    typeof outputFullObject,
+    outputFullObject
   );
   console.log("CLIENT-SIDE /api/returnData: ", typeof outputArr, outputArr);
   console.log(response.headers["content-type"]);
@@ -56,7 +59,8 @@ import "./style.css";
   root.render(
     <React.StrictMode>
       <BrowserRouter>
-        <App outputArr={outputArr} />
+        {/* Passing down certain props */}
+        <App outputFullObject={outputFullObject} />
       </BrowserRouter>
     </React.StrictMode>
   );

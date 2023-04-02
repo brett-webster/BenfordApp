@@ -103,10 +103,6 @@
 
 #outputResultsText {
   position: absolute;
-  bottom: 80px;
+  bottom: 50px;
   left: 20px;
 }
-
-/* #lockImg {
-  position: relative;
-} */

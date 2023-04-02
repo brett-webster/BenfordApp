@@ -69,13 +69,30 @@ app.post("/api/inputdata", (req, res) => {
   // TEMPORARY PLACEHOLDER UNTIL BACKEND ANALYSIS IS COMPLETE
   // BACKEND ANALYSIS TO BE PART OF THIS MIDDLEWARE CHAIN using res.locals, ultimately returning an updated res.locals OR req.body...
   // "getJSON" "confirmValidData" (return msg w. emptyDataBoolean on res.locals IF sum of array entries === 0) "processData"
+  // ONCE res.locals.outputObject IS RETURNED BACK TO FRONT END, RESET object key to EMPTY STRINGS to avoid grabbing stale data on future server pings...
   const arr = []; // [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
   for (let i = 0; i < 10; i++) {
     arr.push(Math.floor(Math.random() * 10000));
   }
   req.body.inputObject.resultArr = arr;
   console.log("UPDATED req.body: ", req.body);
-  localStorage.setItem("processedData", JSON.stringify(req.body.inputObject));
+
+  res.locals.outputObject = req.body.inputObject;
+  // ** INCLUDE LOGIC HERE TO DETERMINE RESULT OF EACH OF THE BELOW TO PASS BACK **
+  res.locals.outputObject.company = "Ford";
+  res.locals.outputObject.quarters = 7;
+  res.locals.outputObject.resultArr = arr;
+  res.locals.outputObject.maxKSdifference = 0.567;
+  res.locals.outputObject.leadingDigit = 7;
+  res.locals.outputObject.totalDigitCount = 340;
+  res.locals.outputObject.sumOfLeadingDigitCount = 81;
+  res.locals.outputObject.results5pcCritical = "REJECT"; // OR 'FAIL TO REJECT'
+  res.locals.outputObject.results1pcCritical = "FAIL TO REJECT"; // OR 'FAIL TO REJECT'
+  console.log("res.locals.outputObject: ", res.locals.outputObject);
+  localStorage.setItem(
+    "processedData",
+    JSON.stringify(res.locals.outputObject)
+  );
 
   return res.status(200).json(req.body);
 });
@@ -83,8 +100,20 @@ app.post("/api/inputdata", (req, res) => {
 // Send processed data back to client-side from Node.js localStorage for presentation
 app.get("/api/returnData", (req, res) => {
   const returnData = localStorage.getItem("processedData");
+  console.log("LATEST SERVER: ", returnData);
   return res.status(200).json(returnData);
 });
+
+// Below VERSION simulates delay on server-side
+// app.get("/api/returnData", async (req, res) => {
+//   const returnData = localStorage.getItem("processedData");
+//   //  console.log("LATEST SERVER: ", returnData);
+//   await delayFxn(10000);
+//   return res.status(200).json(returnData);
+// });
+// // Below fxn simulates delay on server-side
+// const delayFxn = (ms) =>
+//   new Promise((resolve, reject) => setTimeout(resolve, ms));
 
 // -----------
 
