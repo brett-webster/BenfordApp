@@ -6,19 +6,21 @@ import magnifyingGlassImage from "../magnifyingGlassImage.png";
 import chartBenfordResults from "../chartResults.js";
 import { chartDisplayContext } from "../App.jsx"; // ADDED for useContext hook
 
-const MainPage = ({ outputFullObject, setChartDisplayBoolean }) => {
-  // console.log("OutputArr in MainPage: ", outputArr);
-  const {
-    resultArr,
-    company,
-    quarters,
-    maxKSdifference,
-    leadingDigit,
-    totalDigitCount,
-    sumOfLeadingDigitCount,
-    results5pcCritical,
-    results1pcCritical,
-  } = outputFullObject; // further destructure object
+const MainPage = ({ setChartDisplayBoolean }) => {
+  // REMOVED outputFullObject above;
+  // const {
+  //   resultArr,
+  //   company,
+  //   quarters,
+  //   maxKSdifference,
+  //   leadingDigit,
+  //   totalDigitCount,
+  //   sumOfLeadingDigitCount,
+  //   results5pcCritical,
+  //   results1pcCritical,
+  // } = outputFullObject; // further destructure object
+
+  const [outputFullObject2, setOutputFullObject] = useState({});
 
   const chartDisplayBoolean = useContext(chartDisplayContext); // ADDED for useContext hook, pulling it in to access here
   console.log("IN MAINPAGE -- chartDisplayBoolean: ", chartDisplayBoolean);
@@ -47,11 +49,11 @@ const MainPage = ({ outputFullObject, setChartDisplayBoolean }) => {
   const [outputArrayEmptyBoolean, setOutputArrayEmptyBoolean] = useState(false);
 
   // *** DELETE BELOW ***
-  useEffect(() => {
-    const element = document.getElementById("chartHanger");
-    let children = element.childNodes;
-    console.log("CHILDREN: ", children.length, children);
-  });
+  // useEffect(() => {
+  //   const element = document.getElementById("chartHanger");
+  //   let children = element.childNodes;
+  //   console.log("CHILDREN: ", children.length, children);
+  // });
   // useEffect(() => {
   //   console.log("RENDERING, hoping chart is gone...");
   // }, [chartDisplayBoolean]);
@@ -114,6 +116,24 @@ const MainPage = ({ outputFullObject, setChartDisplayBoolean }) => {
         }
       })();
 
+      // **** INSERTED 4/2 6pm
+      (async () => {
+        const response = await axios.get("/api/returnData", {
+          responseType: "json",
+        });
+        const outputFullObject = JSON.parse(response.data);
+        console.log(
+          "CLIENT-SIDE /api/returnData: ",
+          typeof outputFullObject,
+          outputFullObject
+        );
+        console.log(response.headers["content-type"]);
+        setOutputFullObject(outputFullObject); // ADDED 4/2 7pm
+      })();
+      // console.log("outputFullObject2: ", outputFullObject2);  // Returns {} bc no re-render w/o useEffect
+
+      // **************
+
       setChartDisplayBoolean(true); //ADDED 4/1 11pm
 
       // Reset 3 fields here, AFTER data passed from client to server
@@ -126,6 +146,13 @@ const MainPage = ({ outputFullObject, setChartDisplayBoolean }) => {
       });
     }
   }
+
+  // ** ADDED 4/2 7pm **
+  useEffect(() => {
+    console.log("MAIN PAGE 4/2 addition: ", outputFullObject2);
+  }, [outputFullObject2]);
+
+  // **************
 
   function charChangeHandler(event) {
     event.preventDefault();
@@ -223,39 +250,41 @@ const MainPage = ({ outputFullObject, setChartDisplayBoolean }) => {
       <div
       // style={chartDisplayBoolean ? { display: "flex" } : { display: "none" }}
       >
-        {chartDisplayBoolean
-          ? chartBenfordResults(outputFullObject.resultArr)
+        {chartDisplayBoolean && outputFullObject2.resultArr
+          ? chartBenfordResults(outputFullObject2.resultArr)
           : ""}
       </div>
-      {/* {chartBenfordResults(outputArr)} */}
       <br></br>
       <br></br>
 
       {chartDisplayBoolean ? (
         <div id="outputResultsText">
-          <div style={{ fontWeight: "bold" }}>Issuer: {company}</div>
           <div style={{ fontWeight: "bold" }}>
-            Time Frame: {quarters} quarters
+            Issuer: {outputFullObject2.company}
           </div>
           <div style={{ fontWeight: "bold" }}>
-            Highest Digit Frequency (count): {sumOfLeadingDigitCount}
+            Time Frame: {outputFullObject2.quarters} quarters
           </div>
           <div style={{ fontWeight: "bold" }}>
-            Total Digits analyzed (count): {totalDigitCount}
+            Highest Digit Frequency (count):{" "}
+            {outputFullObject2.sumOfLeadingDigitCount}
+          </div>
+          <div style={{ fontWeight: "bold" }}>
+            Total Digits analyzed (count): {outputFullObject2.totalDigitCount}
           </div>
           <br></br>
           <div style={{ fontWeight: "bold", textDecorationLine: "underline" }}>
             RESULTS
           </div>
-          <div>{`For a maximum absolute difference of ${maxKSdifference} (leading digit ${leadingDigit}) between the observed data & the discrete Benford-theoretical curve across ${totalDigitCount} observed leading digits...`}</div>
+          <div>{`For a maximum absolute difference of ${outputFullObject2.maxKSdifference} (leading digit ${outputFullObject2.leadingDigit}) between the observed data & the discrete Benford-theoretical curve across ${outputFullObject2.totalDigitCount} observed leading digits...`}</div>
           <br></br>
           <div style={{ color: "red" }}>
-            {results5pcCritical === "REJECT"
+            {outputFullObject2.results5pcCritical === "REJECT"
               ? "Reject null hypotheses at the 5% critical level --> CONCLUSION:  Absence of Benford conformity, consider further research"
               : "Fail to reject null hypotheses at the 5% critical level --> CONCLUSION:  Potential Benford conformity"}
           </div>
           <div style={{ color: "red" }}>
-            {results1pcCritical === "REJECT"
+            {outputFullObject2.results1pcCritical === "REJECT"
               ? "Reject null hypotheses at the 1% critical level --> CONCLUSION:  Absence of Benford conformity, consider further research"
               : "Fail to reject null hypotheses at the 1% critical level --> CONCLUSION:  Potential Benford conformity"}
           </div>

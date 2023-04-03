@@ -8,7 +8,7 @@ import MainPage from "./components/MainPage.jsx";
 export const chartDisplayContext = createContext("contextAPI WORKS!"); // Added for useContext hook, export required
 
 const App = (props) => {
-  const { outputFullObject } = props;
+  // const { outputFullObject } = props;
   const [chartDisplayBoolean, setChartDisplayBoolean] = useState(false);
 
   console.log("IN APP: ", chartDisplayBoolean);
@@ -26,7 +26,7 @@ const App = (props) => {
             path="/main"
             element={
               <MainPage
-                outputFullObject={outputFullObject}
+                // outputFullObject={outputFullObject}
                 setChartDisplayBoolean={setChartDisplayBoolean}
               />
             }

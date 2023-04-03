@@ -1,6 +1,6 @@
 import Plotly from "plotly.js-dist";
 
-// Export this MainPageContainer.jsx
+// Export this MainPage.jsx
 const chartBenfordResults = (outputArr) => {
   let benfordFreqOfLeadingDigitArrPercentages = [];
   for (let i = 0; i < 10; i++) {

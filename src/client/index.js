@@ -39,32 +39,32 @@ import "./style.css";
 // Receiving final processed data back from server-side to client-side
 // MOVE BELOW TO MainPage & merge w. /api/inputdata
 // Need to make this user-initiated vs. auto-initiated
-(async () => {
-  const response = await axios.get("/api/returnData", {
-    responseType: "json",
-  });
-  const outputFullObject = JSON.parse(response.data);
-  const outputArr = JSON.parse(response.data).resultArr; // REMOVE
-  console.log(
-    "CLIENT-SIDE /api/returnData: ",
-    typeof outputFullObject,
-    outputFullObject
-  );
-  console.log("CLIENT-SIDE /api/returnData: ", typeof outputArr, outputArr);
-  console.log(response.headers["content-type"]);
+// (async () => {
+//   const response = await axios.get("/api/returnData", {
+//     responseType: "json",
+//   });
+//   const outputFullObject = JSON.parse(response.data);
+//   const outputArr = JSON.parse(response.data).resultArr; // REMOVE
+//   console.log(
+//     "CLIENT-SIDE /api/returnData: ",
+//     typeof outputFullObject,
+//     outputFullObject
+//   );
+//   console.log("CLIENT-SIDE /api/returnData: ", typeof outputArr, outputArr);
+//   console.log(response.headers["content-type"]);
 
-  // Moved render() INSIDE of axios get request due to async nature so that outputArr can be passed down as props
-  // Also using React 18 version (newer) here, hence different syntax <-- https://www.npmjs.com/package/react-dom / https://github.com/reactwg/react-18/discussions/5
-  const root = createRoot(document.getElementById("root"));
-  root.render(
-    <React.StrictMode>
-      <BrowserRouter>
-        {/* Passing down certain props */}
-        <App outputFullObject={outputFullObject} />
-      </BrowserRouter>
-    </React.StrictMode>
-  );
-})();
+// Also using React 18 version (newer) here, hence different syntax <-- https://www.npmjs.com/package/react-dom / https://github.com/reactwg/react-18/discussions/5
+const root = createRoot(document.getElementById("root"));
+root.render(
+  <React.StrictMode>
+    <BrowserRouter>
+      {/* Passing down certain props */}
+      <App />
+      {/* <App outputFullObject={outputFullObject} /> */}
+    </BrowserRouter>
+  </React.StrictMode>
+);
+// })();
 
 // render(
 //     <BrowserRouter>
