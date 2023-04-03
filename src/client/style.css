@@ -22,7 +22,6 @@
 #benfordAppLogo {
   display: flex;
   height: 75%;
-  /* align-self: center; */
 }
 
 .navBtns {
@@ -50,7 +49,6 @@
 }
 
 #fullLoginContainer {
-  /* position: relative; */
   display: flex;
   flex-direction: column;
   align-items: center;

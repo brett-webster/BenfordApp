@@ -5,18 +5,15 @@ import LogIn from "./components/LogIn.jsx";
 import SignUp from "./components/SignUp.jsx";
 import MainPage from "./components/MainPage.jsx";
 
-export const chartDisplayContext = createContext("contextAPI WORKS!"); // Added for useContext hook, export required
+export const chartDisplayContext = createContext("contextAPI!"); // Added for useContext hook, export required
 
-const App = (props) => {
-  // const { outputFullObject } = props;
+const App = () => {
   const [chartDisplayBoolean, setChartDisplayBoolean] = useState(false);
 
-  console.log("IN APP: ", chartDisplayBoolean);
   return (
     <>
-      {/* Passing down certain props, including setState methods used in tandem w/ useContext */}
-      {/* Provider WRAPPERs ADDED below for useContext hooks, need to use "value" prop in syntax -- setting state @ lower component but need access to result @ higher level or sibling component */}
-      {/* <chartClearedContext.Provider value={chartClearedContext._currentValue}>  // <--- THIS IS wrong, should be {chartClearedBoolean} as below */}
+      {/* Passing down certain props, including setState method used in tandem w/ useContext */}
+      {/* Provider WRAPPERs ADDED below for useContext hooks, need to use "value" prop in syntax below -- setting state @ lower component but need access to result @ higher level or sibling component */}
       <chartDisplayContext.Provider value={chartDisplayBoolean}>
         <Routes>
           <Route exact path="/" element={<LandingPage />} />
@@ -25,10 +22,7 @@ const App = (props) => {
           <Route
             path="/main"
             element={
-              <MainPage
-                // outputFullObject={outputFullObject}
-                setChartDisplayBoolean={setChartDisplayBoolean}
-              />
+              <MainPage setChartDisplayBoolean={setChartDisplayBoolean} />
             }
           />
         </Routes>

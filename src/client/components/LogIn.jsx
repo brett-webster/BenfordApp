@@ -1,14 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import Navbar from "./Navbar.jsx";
 import lockImage from "../lockImage.png"; // ADDED "file-loader" to package.json for importing .png here & new module -> rule in webpack.config.js.  NOTE:  Conflicting dependencies required uninstalling react-hot-loader (though HRM still seems to be working)
 import axios from "axios";
 
 const LogIn = () => {
-  const [user, setUser] = useState({
-    username: "",
-    password: "",
-  });
+  const [user, setUser] = useState({ username: "", password: "" });
   const [userANDpasswordMatch, setuserANDpasswordMatch] = useState(true);
   const navigate = useNavigate(); // Hook used to proceed to main Benford page upon successful login
 
@@ -24,16 +21,10 @@ const LogIn = () => {
 
   function submitFormHandler(event) {
     event.preventDefault();
-    console.log("user/pass: ", user);
 
     // Send user login data to server for processing...
     (async () => {
       const response = await axios.post("/api/login", { user });
-
-      console.log(
-        "CLIENT-SIDE /api/login Returned back from Server w/ revision: ",
-        response.data
-      );
       if (response.data === "INVALID Username/Password") {
         setuserANDpasswordMatch(false); // Used as flag for  message that username/password combo is invalid
       } else navigate("/main"); // Send user to main page on successful login
@@ -56,7 +47,6 @@ const LogIn = () => {
         {/* 2 fields here w/ onSubmit form, tied to LOG IN only */}
         <form onSubmit={submitFormHandler} id="loginForm">
           <label>
-            {/* Username: */}
             <input
               type="username"
               name="username"
@@ -67,7 +57,6 @@ const LogIn = () => {
             ></input>
           </label>
           <label>
-            {/* Password: */}
             <input
               type="password"
               name="password"
@@ -81,7 +70,6 @@ const LogIn = () => {
           <button type="submit" className="nonNavBtn">
             LOG IN
           </button>
-          {/* <button onClick={clickTest}>LOG IN</button> */}
         </form>
         <br></br> <br></br>
         <Link to="https://www.google.com/">

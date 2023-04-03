@@ -1,19 +1,14 @@
-import React, { useState, useEffect, useContext } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import React, { useEffect, useContext } from "react";
+import { Link } from "react-router-dom";
 import "../style.css";
 import benfordAppLogo from "../BenfordAppLogo.png";
 import { chartDisplayContext } from "../App.jsx"; // ADDED for useContext hook
 
 const Navbar = ({ currentPagePath, setChartDisplayBoolean }) => {
-  console.log("Navbar props: ", currentPagePath);
-
   const chartDisplayBoolean = useContext(chartDisplayContext); // ADDED for useContext hook, pulling it in to access here
-  console.log("IN NAV -- chartDisplayBoolean: ", chartDisplayBoolean);
+
+  // Need useEffect here to read the updated value of changed variable's state following a re-render (in this case tracking the re-setting of the state of chartDisplayBoolean, then displaying/clearing charting)
   useEffect(() => {
-    console.log(
-      "useEffect --> IN NAV -- chartDisplayBoolean: ",
-      chartDisplayBoolean
-    );
     if (chartDisplayBoolean)
       document.getElementById("chartHanger").style.display = "block";
     if (!chartDisplayBoolean)
@@ -21,22 +16,16 @@ const Navbar = ({ currentPagePath, setChartDisplayBoolean }) => {
   }, [chartDisplayBoolean]);
 
   function clearChartHandler() {
-    console.log("Clear chart button clicked");
-    // document.getElementById("chartHanger").style.display = "none";
-    // document.getElementById("outputResultsText").style.display = "none";
-    setChartDisplayBoolean(false); // Set state to remove CLEAR CHART button, tied to useContext API
+    setChartDisplayBoolean(false); // Set state here to remove CLEAR CHART button, tied to useContext API
   }
 
   function logoutHandler() {
-    console.log("Logout selected, clearing any uncleared items");
     document.getElementById("chartHanger").style.display = "none";
-    // document.getElementById("outputResultsText").style.display = "none";
-    setChartDisplayBoolean(false); // ADDED 4/1 11pm -- // Set state to remove CLEAR CHART button, tied to useContext API
+    setChartDisplayBoolean(false); // Set state here to remove CLEAR CHART button, tied to useContext API
   }
 
   return (
     <nav className="navBar">
-      {/* <div>NAVBAR</div> */}
       <img src={benfordAppLogo} id="benfordAppLogo" />
       <div className="navBtns">
         {currentPagePath === "/" ? (
@@ -57,7 +46,7 @@ const Navbar = ({ currentPagePath, setChartDisplayBoolean }) => {
         ) : (
           ""
         )}
-        {/* && !chartClearedBoolean */}
+        {/* CLEAR CHART button should only be displayed if on /main page AND boolean value's state = TRUE */}
         {currentPagePath === "/main" && chartDisplayBoolean ? (
           <button
             onClick={clearChartHandler}

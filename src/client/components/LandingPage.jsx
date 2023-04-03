@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import Navbar from "./Navbar.jsx";
 import benfordChart from "../BenfordvsEvenDistributionChart.png"; // ADDED "file-loader" to package.json for importing .png here & new module -> rule in webpack.config.js.  NOTE:  Conflicting dependencies required uninstalling react-hot-loader (though HRM still seems to be working)
@@ -8,24 +8,10 @@ const LandingPage = () => {
   // Grab current page path and pass down props to Navbar so it renders correct button set
   const currentPage = useLocation();
   let currentPagePath = currentPage.pathname;
-  // let currentPagePath;
-  // useEffect(() => {
-  //   currentPagePath = currentPage.pathname;
-  //   console.log("Current page = ", currentPage.pathname);
-  // });
 
   return (
     <>
-      {/* *** HIDE OR REMOVE <div id="chartHanger" FROM dom WHEN GOING FROM EITHER BELOW ENDPOINT */}
       <Navbar currentPagePath={currentPagePath} />
-      {/* <div>INITIAL LANDING PAGE</div> */}
-      {/* <Link to="/login">
-        <button>LOG IN</button>
-      </Link>
-      <br></br> <br></br>
-      <Link to="/signup">
-        <button>SIGN UP</button>
-      </Link> */}
       <div id="benfordChartandDescLandingPage">
         <img
           src={benfordChart}

@@ -31,7 +31,6 @@ const SignUp = () => {
 
     // Confirm password match; if NOT, notify new user & reset form
     if (newUser.password !== newUser.passwordConfirm) {
-      console.log("PASSWORD MISMATCH");
       setPasswordMatch(false);
       setNewUser({
         ...newUser,
@@ -45,17 +44,13 @@ const SignUp = () => {
     else {
       (async () => {
         const response = await axios.post("/api/signup", { newUser });
-        console.log(
-          "CLIENT-SIDE /api/signup Returned back from Server w/ revision: ",
-          response.data
-        );
         if (response.data === "DUPLICATE USERNAME") {
           setUserNameDup(true); // Used as flag for displaying message to user
         } else navigate("/main"); // Send user to main page on successful signup
       })();
     }
 
-    // Reset 4 fields here, AFTER data passed from client to server
+    // Reset 4 fields here, only AFTER data passed from client to server
     setNewUser({
       ...newUser,
       email: "",
@@ -64,10 +59,6 @@ const SignUp = () => {
       passwordConfirm: "",
     });
   }
-
-  useEffect(() => {
-    console.log("Submit Button clicked! useEffect", newUser);
-  });
 
   return (
     <>
@@ -82,7 +73,6 @@ const SignUp = () => {
         {/* 4 fields here w/ onSubmit form, tied to SIGN UP only */}
         <form onSubmit={submitFormHandler} id="signupForm">
           <label>
-            {/* Email: */}
             <input
               type="email"
               name="email"
@@ -93,7 +83,6 @@ const SignUp = () => {
             ></input>
           </label>
           <label>
-            {/* Username: */}
             <input
               type="username"
               name="username"
@@ -104,7 +93,6 @@ const SignUp = () => {
             ></input>
           </label>
           <label>
-            {/* Password: */}
             <input
               type="password"
               name="password"
@@ -115,7 +103,6 @@ const SignUp = () => {
             ></input>
           </label>
           <label>
-            {/* Confirm Password: */}
             <input
               type="password"
               name="passwordConfirm"
@@ -129,7 +116,6 @@ const SignUp = () => {
           <button type="submit" className="nonNavBtn">
             SIGN UP
           </button>
-          {/* <button onClick={clickTest}>SIGN UP</button> */}
         </form>
         <br></br> <br></br>
         <div style={{ color: "red" }}>
