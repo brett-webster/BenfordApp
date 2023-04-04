@@ -1,12 +1,50 @@
 import React, { useState, useEffect, useContext } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import Navbar from "./Navbar.jsx";
 import axios from "axios";
 import magnifyingGlassImage from "../magnifyingGlassImage.png";
 import chartBenfordResults from "../chartResults.js";
 import { chartDisplayContext } from "../App.jsx"; // ADDED for useContext hook
+import getAndSetCompanyCIKtickerList from "../getAndSetCompanyCIKtickerList.jsx";
 
 const MainPage = ({ setChartDisplayBoolean }) => {
+  // --------------
+  // ** BELOW ADDED TO getAndSetCompanyCIKtickerList **
+  // Modularizing this data grab to get company list for dynamic user input
+  // Steps in order are:  (1) check whether localStorage populated w/ state variable companyCIKtickerListObj contents and if not, then...
+  // ... (2) axios .get() request to server (storing in localStorage & in state)
+  // ... no need to check state variable here since by definition will be {} on initial page load
+  const [companyCIKtickerListObj, setCompanyCIKtickerListObj] = useState({});
+
+  // BELOW MERELY TESTS FUNCTIONALITY on re-render -- TO REMOVE
+  // useEffect(() => {
+  //   console.log(
+  //     "TRACKING companyCIKtickerListObj state in MainPage.jsx: ",
+  //     typeof companyCIKtickerListObj,
+  //     companyCIKtickerListObj
+  //   );
+  //   console.log(
+  //     companyCIKtickerListObj["TESLA, INC."],
+  //     companyCIKtickerListObj["SERVICENOW, INC."]
+  //   );
+  //   console.log(
+  //     "Object.keys(companyCIKtickerListObj).length: ",
+  //     Object.keys(companyCIKtickerListObj).length
+  //   );
+  // }, [companyCIKtickerListObj]);
+
+  // Only invoke imported helper function on page load of MainPage.jsx
+  useEffect(() => {
+    // Sets state of company/CIK code look-up list to state variable & in localStorage for future caching
+    getAndSetCompanyCIKtickerList(
+      companyCIKtickerListObj,
+      setCompanyCIKtickerListObj
+    );
+    // ** INVOKE CODE HERE TO GENERATE AUTOCOMPLETE **
+  }, []); // End useEffect
+
+  // --------------
+
   const chartDisplayBoolean = useContext(chartDisplayContext); // ADDED for useContext hook, pulling it in to access here
 
   const [inputObject, setInputObject] = useState({
@@ -142,6 +180,14 @@ const MainPage = ({ setChartDisplayBoolean }) => {
               required
             ></input>
           </label>
+          <Link
+            to="https://www.sec.gov/edgar/searchedgar/companysearch"
+            target="_blank"
+            style={{ fontSize: "12px", fontFamily: "arial" }}
+          >
+            Company/CIK lookup
+          </Link>
+          <br></br>
           <input
             type="date"
             name="startDate"
