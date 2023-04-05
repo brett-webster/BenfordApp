@@ -6,60 +6,96 @@ import magnifyingGlassImage from "../magnifyingGlassImage.png";
 import chartBenfordResults from "../chartResults.js";
 import { chartDisplayContext } from "../App.jsx"; // ADDED for useContext hook
 import getAndSetCompanyCIKtickerList from "../getAndSetCompanyCIKtickerList.jsx";
+import CompanyInputAutocomplete from "./CompanyInputAutocomplete.jsx";
 
 const MainPage = ({ setChartDisplayBoolean }) => {
-  // --------------
-  // ** BELOW ADDED TO getAndSetCompanyCIKtickerList **
-  // Modularizing this data grab to get company list for dynamic user input
-  // Steps in order are:  (1) check whether localStorage populated w/ state variable companyCIKtickerListObj contents and if not, then...
-  // ... (2) axios .get() request to server (storing in localStorage & in state)
-  // ... no need to check state variable here since by definition will be {} on initial page load
-  const [companyCIKtickerListObj, setCompanyCIKtickerListObj] = useState({});
-
-  // BELOW MERELY TESTS FUNCTIONALITY on re-render -- TO REMOVE
-  // useEffect(() => {
-  //   console.log(
-  //     "TRACKING companyCIKtickerListObj state in MainPage.jsx: ",
-  //     typeof companyCIKtickerListObj,
-  //     companyCIKtickerListObj
-  //   );
-  //   console.log(
-  //     companyCIKtickerListObj["TESLA, INC."],
-  //     companyCIKtickerListObj["SERVICENOW, INC."]
-  //   );
-  //   console.log(
-  //     "Object.keys(companyCIKtickerListObj).length: ",
-  //     Object.keys(companyCIKtickerListObj).length
-  //   );
-  // }, [companyCIKtickerListObj]);
-
-  // Only invoke imported helper function on page load of MainPage.jsx
-  useEffect(() => {
-    // Sets state of company/CIK code look-up list to state variable & in localStorage for future caching
-    getAndSetCompanyCIKtickerList(
-      companyCIKtickerListObj,
-      setCompanyCIKtickerListObj
-    );
-    // ** INVOKE CODE HERE TO GENERATE AUTOCOMPLETE **
-  }, []); // End useEffect
-
-  // --------------
-
-  const chartDisplayBoolean = useContext(chartDisplayContext); // ADDED for useContext hook, pulling it in to access here
-
+  // State variables
   const [inputObject, setInputObject] = useState({
     CIK: "",
     company: "",
+    ticker: "",
     startDate: "",
     endDate: "",
   });
   const [badDateRangeBoolean, setBadDateRangeBoolean] = useState(false);
   const [outputArrayEmptyBoolean, setOutputArrayEmptyBoolean] = useState(false);
   const [outputObject, setOutputObject] = useState({});
+  const [companyCIKtickerListObj, setCompanyCIKtickerListObj] = useState({});
+  const [companyListArr, setCompanyListArr] = useState([]);
+  // Default set of state w/ descriptions -- set state w/ hook
+  const initialAutocompleteState = {
+    // The active selection's index
+    activeSuggestion: 0,
+    // The suggestions that match the user's input
+    filteredSuggestions: [],
+    // Whether or not the suggestion list is shown
+    showSuggestions: false,
+    // What the user has entered
+    userInput: "",
+  };
+  const [autocompleteState, setAutocompleteState] = useState(
+    initialAutocompleteState
+  );
+
+  // ADDED for useContext hook, pulling it in to access here
+  const chartDisplayBoolean = useContext(chartDisplayContext);
 
   // Grab current page path and pass down props to Navbar so it renders correct button set
   const currentPage = useLocation();
   let currentPagePath = currentPage.pathname;
+
+  // START of useEffect hooks
+
+  // getAndSetCompanyCIKtickerList.jsx:  Modularizing this data grab to get company list for dynamic user input
+  // Steps in order are:  (1) check whether localStorage is populated w/ state variable companyCIKtickerListObj contents;
+  // ...if not, then (2) send axios .get() request to server (storing response object in localStorage & in state)
+  // ...no need to check state variable here since by definition will be {} on initial page load
+  useEffect(() => {
+    // Sets state of company/CIK code look-up list to state variable & in localStorage for future caching
+    getAndSetCompanyCIKtickerList(
+      companyCIKtickerListObj,
+      setCompanyCIKtickerListObj
+    );
+  }, []); // End useEffect -->  Invoke imported helper function ONLY on page load of MainPage.jsx to grab & store object
+
+  // Create array of company names in ascending order to be passed down as props to CompanyInputAutocomplete.jsx
+  useEffect(() => {
+    // Iterate thru newly created object (companyCIKtickerListObj) to create array -- object eliminated dups, sorted array of company names is needed for auto-complete code & passed down to child component as props
+    const arrList = [];
+    for (const companyName in companyCIKtickerListObj) {
+      arrList.push(companyName);
+    }
+    arrList.sort();
+    setCompanyListArr(arrList);
+    // console.log("companyListArr in MainPage: ", companyListArr);
+    // console.log(companyListArr.length);
+  }, [companyCIKtickerListObj]); // End useEffect --> ONLY on update to companyCIKtickerListObj (above)
+
+  // Autocomplete -- set state of inputObject (company, CIK, ticker) to be passed to server
+  useEffect(() => {
+    // console.log(
+    //   "autocompleteState: ",
+    //   autocompleteState,
+    //   companyCIKtickerListObj
+    // );
+    const companyName = autocompleteState.userInput;
+    // To avoid errors, ONLY set state of input object if companyCIKtickerListObj is populated AND companyName has been input AND is present in object
+    if (
+      Object.keys(companyCIKtickerListObj).length !== 0 &&
+      companyCIKtickerListObj[companyName]
+    ) {
+      // Find company CIK code & ticker in companyCIKtickerListObj based on name submitted; assign these to inputObj BEFORE posting to server
+      const CIK = companyCIKtickerListObj[companyName][0];
+      const ticker = companyCIKtickerListObj[companyName][1];
+      // console.log("companyName/CIK/ticker:", companyName, CIK, ticker);
+      setInputObject({
+        ...inputObject,
+        company: companyName,
+        CIK: CIK,
+        ticker: ticker,
+      });
+    }
+  }, [autocompleteState]); // End useEffect --> ONLY on update to autocompleteState (i.e. when company name has updated)
 
   // Need useEffect here to read the updated value of changed variable's state following a re-render (in this case tracking the re-setting of the state of chartDisplayBoolean, then displaying/clearing charting)
   useEffect(() => {
@@ -67,29 +103,31 @@ const MainPage = ({ setChartDisplayBoolean }) => {
       document.getElementById("chartHanger").style.display = "block";
     if (!chartDisplayBoolean)
       document.getElementById("chartHanger").style.display = "none";
-  }, [chartDisplayBoolean]);
+  }, [chartDisplayBoolean]); // End useEffect --> ONLY on update to chartDisplayBoolean flag
+  // End of useEffect hooks
 
+  // ---------------
+
+  // Below submitFormHandler & charChangeHandler functions invoked in return portion of component
   function submitFormHandler(event) {
     event.preventDefault();
-
+    console.log(
+      "Submitted data in MainPage, client-side pre-server: ",
+      inputObject
+    );
     // Validate dates selected are acceptable (i.e. startDate < endDate)
     if (inputObject.startDate >= inputObject.endDate) {
       setInputObject({ ...inputObject, startDate: "", endDate: "" });
       setBadDateRangeBoolean(true); // Flag triggering error message to display on-screen
     } else {
-      // From server side, validate whether inputs OK
+      // From server side, validate whether inputs are OK
       // RETURN MESSAGE IF:  (1) SAMPLE SIZE OF 0 IS FOUND (0 FINANCIAL STATEMENTS OR LEADING DIGITS THEREIN)
-      // ABOVE COVERS VALID CIK BUT THAT LACKS FILINGS AND ALSO VALID CIK W/ FILINGS BUT NO NUMBERS THEREIN; LASTLY, COVERS BAD CIK
+      // ABOVE COVERS VALID CIK BUT THAT LACKS FILINGS AND ALSO VALID CIK W/ FILINGS BUT NO NUMBERS THEREIN; LASTLY, COVERS BAD CIK (BUT THIS IS NOT RELEVANT SINCE PRE-FILTERED)
       // IN ABOVE CASE, DO NOT OUTPUT CHART, ONLY OUTPUT EMPTY RESULTS
       // Send input data to server for processing...
       // MERGE w/ /api/returnData endpoint to avoid multiple server calls --> /api/inputAndreturnData
       (async () => {
         const response = await axios.post("/api/inputData", { inputObject });
-
-        console.log(
-          "CLIENT-SIDE /api/inputdata Returned back from Server w/ revision: ",
-          response.data
-        );
         // ** ADJUST THE BELOW ** Error handle empty array from server
         if (response.data === "Input data yields EMPTY ARRAY") {
           setOutputArrayEmptyBoolean(true); // Used as flag for message that outputArr contains no digits
@@ -97,6 +135,11 @@ const MainPage = ({ setChartDisplayBoolean }) => {
         } else {
           console.log(
             "VALID DATA, rendering now (after processing on server-side)..."
+          );
+          console.log(
+            "CLIENT-SIDE /api/inputdata Returned back from Server w/ ADDITIONS: ",
+            typeof response.data,
+            response.data.inputObject
           );
           // PROCEED TO RENDER DATA (from bundled object -- "outputObject") RECEIVED IN RESPONSE FROM SERVER (first using loading circle)
         }
@@ -108,26 +151,28 @@ const MainPage = ({ setChartDisplayBoolean }) => {
           responseType: "json",
         });
         const responseObject = JSON.parse(response.data);
-        console.log(
-          "CLIENT-SIDE /api/returnData: ",
-          typeof responseObject,
-          responseObject
-        );
-        setOutputObject(responseObject); // ADDED 4/2 7pm
+        setOutputObject(responseObject);
+        // console.log(
+        //   "CLIENT-SIDE /api/returnData: ",
+        //   typeof responseObject,
+        //   responseObject
+        // );
       })();
 
       setChartDisplayBoolean(true);
-      // Reset 3 fields here, AFTER data passed from client to server
+      // Reset fields here, AFTER data passed from client to server
       setInputObject({
         ...inputObject,
         CIK: "",
         company: "",
+        ticker: "",
         startDate: "",
         endDate: "",
       });
     }
   }
 
+  // Applies ONLY to data range; autocomplete logic found in CompanyInputAutocomplete.jsx
   function charChangeHandler(event) {
     event.preventDefault();
     const { name, value } = event.target; // Generic key/value pair input (unknown in advance) to be inserted/overlaid atop current inputObject using spread operator
@@ -170,16 +215,21 @@ const MainPage = ({ setChartDisplayBoolean }) => {
             !chartDisplayBoolean ? { display: "flex" } : { display: "none" }
           }
         >
-          <label>
-            <input
-              type="text"
-              name="CIK"
-              placeholder="* Company name (CIK) *"
-              value={inputObject.CIK}
-              onChange={charChangeHandler}
-              required
-            ></input>
-          </label>
+          <CompanyInputAutocomplete
+            companyListArr={companyListArr}
+            chartDisplayBoolean={chartDisplayBoolean}
+            setAutocompleteState={setAutocompleteState}
+            autocompleteState={autocompleteState}
+          />
+          {/* BELOW REPLACED w/ AUTOCOMPLETE component (above) */}
+          {/* <input
+            type="text"
+            name="company" // const companyName = document.getElementsByName("company");
+            placeholder="* Company name *"
+            value={inputObject.company}
+            onChange={charChangeHandler}
+            required
+          ></input> */}
           <Link
             to="https://www.sec.gov/edgar/searchedgar/companysearch"
             target="_blank"
@@ -236,7 +286,9 @@ const MainPage = ({ setChartDisplayBoolean }) => {
       {chartDisplayBoolean ? (
         <div id="outputResultsText">
           <div style={{ fontWeight: "bold" }}>
-            Issuer: {outputObject.company}
+            Issuer: {outputObject.company} {"   ("}Ticker: {outputObject.ticker}
+            {" <---> "} CIK: {outputObject.CIK}
+            {")"}
           </div>
           <div style={{ fontWeight: "bold" }}>
             Time Frame: {outputObject.quarters} quarters

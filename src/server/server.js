@@ -30,15 +30,14 @@ if (process.env.NODE_ENV === "production") {
 // /inputdata endpoint -- Receive input from Main component
 app.post("/api/inputdata", (req, res) => {
   // console.log("INPUT DATA req.body on Server-side: ", req.body);
-  const { CIK, startDate, endDate } = req.body.inputObject; // destructure req.body object sent from client
+  const { company, ticker, CIK, startDate, endDate } = req.body.inputObject; // destructure req.body object sent from client
 
   // Add leading digits to CIK code, if length is less than 10 to standardize
   let fullCIK = CIK;
   while (fullCIK.length < 10) {
     fullCIK = "0" + fullCIK;
   }
-  req.body.inputObject.CIK = fullCIK;
-  console.log("Full CIK on SERVER-SIDE: ", fullCIK);
+  // console.log("Full CIK on SERVER-SIDE: ", fullCIK);
 
   // TEMPORARY PLACEHOLDER UNTIL BACKEND ANALYSIS IS COMPLETE
   // BACKEND ANALYSIS TO BE PART OF THIS MIDDLEWARE CHAIN using res.locals, ultimately returning an updated res.locals OR req.body...
@@ -48,13 +47,17 @@ app.post("/api/inputdata", (req, res) => {
   for (let i = 0; i < 10; i++) {
     arr.push(Math.floor(Math.random() * 10000));
   }
-  req.body.inputObject.resultArr = arr;
-  console.log("UPDATED req.body: ", req.body);
+  // req.body.inputObject.resultArr = arr;
+  // console.log("UPDATED req.body: ", req.body);
 
   res.locals.outputObject = req.body.inputObject;
   // ** INCLUDE LOGIC HERE TO DETERMINE RESULT OF EACH OF THE BELOW TO PASS BACK **
-  res.locals.outputObject.company = "Ford";
-  res.locals.outputObject.quarters = 7;
+  res.locals.outputObject.company = company;
+  res.locals.outputObject.ticker = ticker;
+  res.locals.outputObject.CIK = fullCIK;
+  res.locals.outputObject.startDate = startDate;
+  res.locals.outputObject.endDate = endDate;
+  res.locals.outputObject.quarters = 77;
   res.locals.outputObject.resultArr = arr;
   res.locals.outputObject.maxKSdifference = 0.567;
   res.locals.outputObject.leadingDigit = 7;

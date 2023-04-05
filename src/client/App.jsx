@@ -13,7 +13,7 @@ const App = () => {
   return (
     <>
       {/* Passing down certain props, including setState method used in tandem w/ useContext */}
-      {/* Provider WRAPPERs ADDED below for useContext hooks, need to use "value" prop in syntax below -- setting state @ lower component but need access to result @ higher level or sibling component */}
+      {/* Provider WRAPPER ADDED below for useContext hook, need to use "value" prop in syntax below -- setting state @ lower component but need access to result @ higher level or sibling component */}
       <chartDisplayContext.Provider value={chartDisplayBoolean}>
         <Routes>
           <Route exact path="/" element={<LandingPage />} />
