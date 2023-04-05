@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 
 function CompanyInputAutocomplete({
   chartDisplayBoolean,
@@ -8,22 +8,6 @@ function CompanyInputAutocomplete({
 }) {
   // Passing down props:  flag for clearing charting (triggers clear of company name field), array of company names used for auto-complete & setAutocompleteState state setter & associated variable (setting it here, but accessing it in direct parent to send full input bundle to server)
 
-  // BELOW MOVED UP TO MAINPAGE in ORDER TO ACCESS THERE & ...
-  //   // Default set of state w/ descriptions -- set state w/ hook
-  //   const initialAutocompleteState = {
-  //     // The active selection's index
-  //     activeSuggestion: 0,
-  //     // The suggestions that match the user's input
-  //     filteredSuggestions: [],
-  //     // Whether or not the suggestion list is shown
-  //     showSuggestions: false,
-  //     // What the user has entered
-  //     userInput: "",
-  //   };
-  //   const [autocompleteState, setAutocompleteState] = useState(
-  //     initialAutocompleteState
-  //   );
-
   // Reset company name field value to "" on each new render
   useEffect(() => {
     setAutocompleteState({ ...autocompleteState, userInput: "" });
@@ -32,16 +16,6 @@ function CompanyInputAutocomplete({
   useEffect(() => {
     setAutocompleteState({ ...autocompleteState, userInput: "" });
   }, [chartDisplayBoolean]);
-
-  // ADDED FOR TESTING ONLY...
-  //   console.log(
-  //     "chartDisplayBoolean passed down to CompanyInputAutocomplete: ",
-  //     chartDisplayBoolean
-  //   );
-  //   useEffect(() => {
-  //     console.log("autocompleteState.userInput: ", autocompleteState.userInput);
-  //   }, [autocompleteState.userInput]);
-  //   console.log('companyListArr in CompanyInputAutocomplete page: ', companyListArr);
 
   // ------------
 
@@ -73,6 +47,14 @@ function CompanyInputAutocomplete({
     });
   };
 
+  // ADDED HOVER TO AVOID 2 SIMULTANEOUSLY HIGHLIGHTED NAMES
+  const onHover = (index) => {
+    setAutocompleteState({
+      ...autocompleteState,
+      activeSuggestion: index,
+    });
+  };
+
   const onKeyDown = (event) => {
     const { activeSuggestion, filteredSuggestions } = autocompleteState;
 
@@ -97,7 +79,8 @@ function CompanyInputAutocomplete({
     }
     // User pressed the down arrow -- return & do nothing when user presses down key @ lowest position, otherwise move down one
     else if (event.keyCode === 40) {
-      if (activeSuggestion - 1 === filteredSuggestions.length) {
+      if (activeSuggestion + 1 === filteredSuggestions.length) {
+        // CORRECTED INITIAL ERROR HERE
         return;
       }
       setAutocompleteState({
@@ -128,7 +111,13 @@ function CompanyInputAutocomplete({
             }
 
             return (
-              <li className={className} key={suggestion} onClick={onClick}>
+              <li
+                className={className}
+                key={suggestion}
+                onClick={onClick}
+                index={index}
+                onMouseEnter={onHover}
+              >
                 {suggestion}
               </li>
             );
@@ -155,6 +144,7 @@ function CompanyInputAutocomplete({
         onChange={charChangeHandler}
         onKeyDown={onKeyDown}
         required
+        id="companyNameBox"
       ></input>
       {suggestionsListComponent}
     </>

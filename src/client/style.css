@@ -1,5 +1,5 @@
 .navBar {
-  background-color: rgb(175, 216, 251);
+  background: rgb(175, 216, 251);
   opacity: 0.6;
   background-image: linear-gradient(
     to bottom,
@@ -103,4 +103,43 @@
   position: absolute;
   bottom: 50px;
   left: 20px;
+}
+
+/* -----autocomplete below----- */
+
+#companyNameBox {
+  width: 310px;
+  text-align: center;
+}
+
+.noSuggestions {
+  color: #999;
+  padding: 0.5rem;
+}
+
+.autoCompleteSuggestions {
+  border: 1px solid #999;
+  border-top-width: 0;
+  list-style: none;
+  margin-top: 0;
+  max-height: 143px;
+  overflow-y: auto;
+  padding-left: 0;
+  width: calc(300px + 1rem);
+}
+
+.autoCompleteSuggestions li {
+  padding: 0.5rem;
+}
+
+.activeSuggestion,
+.autoCompleteSuggestions li:hover {
+  background: rgb(226, 229, 230);
+  color: grey;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.autoCompleteSuggestions li:not(:last-of-type) {
+  border-bottom: 1px solid #999;
 }

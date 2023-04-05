@@ -7,6 +7,7 @@ import chartBenfordResults from "../chartResults.js";
 import { chartDisplayContext } from "../App.jsx"; // ADDED for useContext hook
 import getAndSetCompanyCIKtickerList from "../getAndSetCompanyCIKtickerList.jsx";
 import CompanyInputAutocomplete from "./CompanyInputAutocomplete.jsx";
+import BenfordResultsText from "./BenfordResultsText.jsx";
 
 const MainPage = ({ setChartDisplayBoolean }) => {
   // State variables
@@ -67,17 +68,10 @@ const MainPage = ({ setChartDisplayBoolean }) => {
     }
     arrList.sort();
     setCompanyListArr(arrList);
-    // console.log("companyListArr in MainPage: ", companyListArr);
-    // console.log(companyListArr.length);
   }, [companyCIKtickerListObj]); // End useEffect --> ONLY on update to companyCIKtickerListObj (above)
 
   // Autocomplete -- set state of inputObject (company, CIK, ticker) to be passed to server
   useEffect(() => {
-    // console.log(
-    //   "autocompleteState: ",
-    //   autocompleteState,
-    //   companyCIKtickerListObj
-    // );
     const companyName = autocompleteState.userInput;
     // To avoid errors, ONLY set state of input object if companyCIKtickerListObj is populated AND companyName has been input AND is present in object
     if (
@@ -87,7 +81,6 @@ const MainPage = ({ setChartDisplayBoolean }) => {
       // Find company CIK code & ticker in companyCIKtickerListObj based on name submitted; assign these to inputObj BEFORE posting to server
       const CIK = companyCIKtickerListObj[companyName][0];
       const ticker = companyCIKtickerListObj[companyName][1];
-      // console.log("companyName/CIK/ticker:", companyName, CIK, ticker);
       setInputObject({
         ...inputObject,
         company: companyName,
@@ -112,7 +105,7 @@ const MainPage = ({ setChartDisplayBoolean }) => {
   function submitFormHandler(event) {
     event.preventDefault();
     console.log(
-      "Submitted data in MainPage, client-side pre-server: ",
+      "Submitted data in MainPage, CLIENT-SIDE pre-server: ",
       inputObject
     );
     // Validate dates selected are acceptable (i.e. startDate < endDate)
@@ -124,10 +117,11 @@ const MainPage = ({ setChartDisplayBoolean }) => {
       // RETURN MESSAGE IF:  (1) SAMPLE SIZE OF 0 IS FOUND (0 FINANCIAL STATEMENTS OR LEADING DIGITS THEREIN)
       // ABOVE COVERS VALID CIK BUT THAT LACKS FILINGS AND ALSO VALID CIK W/ FILINGS BUT NO NUMBERS THEREIN; LASTLY, COVERS BAD CIK (BUT THIS IS NOT RELEVANT SINCE PRE-FILTERED)
       // IN ABOVE CASE, DO NOT OUTPUT CHART, ONLY OUTPUT EMPTY RESULTS
-      // Send input data to server for processing...
-      // MERGE w/ /api/returnData endpoint to avoid multiple server calls --> /api/inputAndreturnData
+      // Send input data to server for processing & response...
       (async () => {
-        const response = await axios.post("/api/inputData", { inputObject });
+        const response = await axios.post("/api/inputAndreturnData", {
+          inputObject,
+        });
         // ** ADJUST THE BELOW ** Error handle empty array from server
         if (response.data === "Input data yields EMPTY ARRAY") {
           setOutputArrayEmptyBoolean(true); // Used as flag for message that outputArr contains no digits
@@ -137,26 +131,13 @@ const MainPage = ({ setChartDisplayBoolean }) => {
             "VALID DATA, rendering now (after processing on server-side)..."
           );
           console.log(
-            "CLIENT-SIDE /api/inputdata Returned back from Server w/ ADDITIONS: ",
+            "CLIENT-SIDE /api/inputAndreturnData Returned back from Server w/ ADDITIONS: ",
             typeof response.data,
-            response.data.inputObject
+            response.data
           );
+          setOutputObject(response.data);
           // PROCEED TO RENDER DATA (from bundled object -- "outputObject") RECEIVED IN RESPONSE FROM SERVER (first using loading circle)
         }
-      })();
-
-      // **** INSERTED 4/2 6pm -- ** this logic to be combined w/ /api/inputData once integrated on server-side **
-      (async () => {
-        const response = await axios.get("/api/returnData", {
-          responseType: "json",
-        });
-        const responseObject = JSON.parse(response.data);
-        setOutputObject(responseObject);
-        // console.log(
-        //   "CLIENT-SIDE /api/returnData: ",
-        //   typeof responseObject,
-        //   responseObject
-        // );
       })();
 
       setChartDisplayBoolean(true);
@@ -221,15 +202,6 @@ const MainPage = ({ setChartDisplayBoolean }) => {
             setAutocompleteState={setAutocompleteState}
             autocompleteState={autocompleteState}
           />
-          {/* BELOW REPLACED w/ AUTOCOMPLETE component (above) */}
-          {/* <input
-            type="text"
-            name="company" // const companyName = document.getElementsByName("company");
-            placeholder="* Company name *"
-            value={inputObject.company}
-            onChange={charChangeHandler}
-            required
-          ></input> */}
           <Link
             to="https://www.sec.gov/edgar/searchedgar/companysearch"
             target="_blank"
@@ -282,8 +254,12 @@ const MainPage = ({ setChartDisplayBoolean }) => {
       </div>
       <br></br>
       <br></br>
-
-      {chartDisplayBoolean ? (
+      <BenfordResultsText
+        chartDisplayBoolean={chartDisplayBoolean}
+        outputObject={outputObject}
+      />
+      {/* REMOVE BELOW */}
+      {/* {chartDisplayBoolean ? (
         <div id="outputResultsText">
           <div style={{ fontWeight: "bold" }}>
             Issuer: {outputObject.company} {"   ("}Ticker: {outputObject.ticker}
@@ -319,7 +295,7 @@ const MainPage = ({ setChartDisplayBoolean }) => {
         </div>
       ) : (
         ""
-      )}
+      )} */}
     </>
   );
 };

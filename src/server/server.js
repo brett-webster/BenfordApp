@@ -3,10 +3,6 @@ const app = express();
 const path = require("path");
 const fs = require("fs");
 
-// Node.js equivalent of localStorage on client-side (attached to window)
-const LocalStorage = require("node-localstorage").LocalStorage;
-const localStorage = new LocalStorage("./node-localStorage");
-
 app.use(express.json());
 
 // -----------
@@ -27,8 +23,8 @@ if (process.env.NODE_ENV === "production") {
 // -----------
 
 // MOVE below items to controllers w/ middleware, once ready
-// /inputdata endpoint -- Receive input from Main component
-app.post("/api/inputdata", (req, res) => {
+// /inputdata endpoint -- Receive input from MainPage component, processes & sends data back to client-side from Node.js
+app.post("/api/inputAndreturnData", (req, res) => {
   // console.log("INPUT DATA req.body on Server-side: ", req.body);
   const { company, ticker, CIK, startDate, endDate } = req.body.inputObject; // destructure req.body object sent from client
 
@@ -37,7 +33,6 @@ app.post("/api/inputdata", (req, res) => {
   while (fullCIK.length < 10) {
     fullCIK = "0" + fullCIK;
   }
-  // console.log("Full CIK on SERVER-SIDE: ", fullCIK);
 
   // TEMPORARY PLACEHOLDER UNTIL BACKEND ANALYSIS IS COMPLETE
   // BACKEND ANALYSIS TO BE PART OF THIS MIDDLEWARE CHAIN using res.locals, ultimately returning an updated res.locals OR req.body...
@@ -66,24 +61,14 @@ app.post("/api/inputdata", (req, res) => {
   res.locals.outputObject.results5pcCritical = "REJECT"; // OR 'FAIL TO REJECT'
   res.locals.outputObject.results1pcCritical = "FAIL TO REJECT"; // OR 'FAIL TO REJECT'
   console.log("res.locals.outputObject: ", res.locals.outputObject);
-  localStorage.setItem(
-    "processedData",
-    JSON.stringify(res.locals.outputObject)
-  );
 
-  return res.status(200).json(req.body);
-});
-
-// Send processed data back to client-side from Node.js localStorage for presentation -- MERGE THIS into middleware chain starting w/ .post("/api/inputdata...")
-app.get("/api/returnData", (req, res) => {
-  const returnData = localStorage.getItem("processedData");
-  // console.log("LATEST SERVER: ", returnData);
-  return res.status(200).json(returnData);
+  return res.status(200).json(res.locals.outputObject);
 });
 
 // Below VERSION simulates delay on server-side
 // app.get("/api/returnData", async (req, res) => {
-//   const returnData = localStorage.getItem("processedData");
+//   const returnData = localStorage.getItem("processedData");  <-- UPDATE THIS
+//   const returnData = res.locals.outputObject;  <-- UPDATED HERE
 //   //  console.log("LATEST SERVER: ", returnData);
 //   await delayFxn(10000);
 //   return res.status(200).json(returnData);
