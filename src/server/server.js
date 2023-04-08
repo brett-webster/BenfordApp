@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const path = require("path");
 const fs = require("fs");
+const getDataFromSECedgarJSONandProcess = require("./getDataFromSECedgarJSONandProcess");
 
 app.use(express.json());
 
@@ -24,7 +25,7 @@ if (process.env.NODE_ENV === "production") {
 
 // MOVE below items to controllers w/ middleware, once ready
 // /inputdata endpoint -- Receive input from MainPage component, processes & sends data back to client-side from Node.js
-app.post("/api/inputAndreturnData", (req, res) => {
+app.post("/api/inputAndReturnData", (req, res) => {
   // console.log("INPUT DATA req.body on Server-side: ", req.body);
   const { company, ticker, CIK, startDate, endDate } = req.body.inputObject; // destructure req.body object sent from client
 
@@ -35,15 +36,29 @@ app.post("/api/inputAndreturnData", (req, res) => {
   }
 
   // TEMPORARY PLACEHOLDER UNTIL BACKEND ANALYSIS IS COMPLETE
-  // BACKEND ANALYSIS TO BE PART OF THIS MIDDLEWARE CHAIN using res.locals, ultimately returning an updated res.locals OR req.body...
+  // BACKEND ANALYSIS TO BE PART OF THIS MIDDLEWARE CHAIN using res.locals, ultimately returning an updated processedObj attached to res.locals
   // "getJSON" "confirmValidData" (return msg w. emptyDataBoolean on res.locals IF sum of array entries === 0) "processData"
   // ONCE res.locals.outputObject IS RETURNED BACK TO FRONT END, RESET object key to EMPTY STRINGS to avoid grabbing stale data on future server pings...
   const arr = []; // [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
   for (let i = 0; i < 10; i++) {
     arr.push(Math.floor(Math.random() * 10000));
   }
-  // req.body.inputObject.resultArr = arr;
-  // console.log("UPDATED req.body: ", req.body);
+
+  // Promise chaining
+  // getDataFromSECedgarJSONandProcess(CIK, startDate, endDate).then(
+  //   (processedObj) => {
+  //     console.log("processedObj MAIN: ", processedObj);
+  //     // const { quarters } = processedObj.quarters;
+  //   }
+  // );
+  // ALTERNATE FORM
+  (async () => {
+    const processedObj = await getDataFromSECedgarJSONandProcess(
+      CIK,
+      startDate,
+      endDate
+    );
+  })();
 
   res.locals.outputObject = req.body.inputObject;
   // ** INCLUDE LOGIC HERE TO DETERMINE RESULT OF EACH OF THE BELOW TO PASS BACK **
@@ -52,7 +67,7 @@ app.post("/api/inputAndreturnData", (req, res) => {
   res.locals.outputObject.CIK = fullCIK;
   res.locals.outputObject.startDate = startDate;
   res.locals.outputObject.endDate = endDate;
-  res.locals.outputObject.quarters = 77;
+  // res.locals.outputObject.quarters = quarters;
   res.locals.outputObject.resultArr = arr;
   res.locals.outputObject.maxKSdifference = 0.567;
   res.locals.outputObject.leadingDigit = 7;
@@ -64,18 +79,6 @@ app.post("/api/inputAndreturnData", (req, res) => {
 
   return res.status(200).json(res.locals.outputObject);
 });
-
-// Below VERSION simulates delay on server-side
-// app.get("/api/returnData", async (req, res) => {
-//   const returnData = localStorage.getItem("processedData");  <-- UPDATE THIS
-//   const returnData = res.locals.outputObject;  <-- UPDATED HERE
-//   //  console.log("LATEST SERVER: ", returnData);
-//   await delayFxn(10000);
-//   return res.status(200).json(returnData);
-// });
-// // Below fxn simulates delay on server-side
-// const delayFxn = (ms) =>
-//   new Promise((resolve, reject) => setTimeout(resolve, ms));
 
 // -----------
 

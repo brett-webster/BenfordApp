@@ -16,16 +16,17 @@ const BenfordResultsText = ({ chartDisplayBoolean, outputObject }) => {
           </div>
           <div style={{ fontWeight: "bold" }}>
             Highest Digit Frequency (count):{" "}
-            {outputObject.sumOfLeadingDigitCount}
+            {outputObject.highestLeadingDigitCount}
           </div>
           <div style={{ fontWeight: "bold" }}>
-            Total Digits analyzed (count): {outputObject.totalDigitCount}
+            Total Digits analyzed (count):{" "}
+            {outputObject.totalLeadingDigitsCount}
           </div>
           <br></br>
           <div style={{ fontWeight: "bold", textDecorationLine: "underline" }}>
             RESULTS
           </div>
-          <div>{`For a maximum absolute difference of ${outputObject.maxKSdifference} (leading digit ${outputObject.leadingDigit}) between the observed data & the discrete Benford-theoretical curve across ${outputObject.totalDigitCount} observed leading digits...`}</div>
+          <div>{`For a maximum absolute difference of ${outputObject.maxKSdifference} (leading digit ${outputObject.selectedLeadingDigit}) between the observed data & the discrete Benford-theoretical curve across ${outputObject.totalLeadingDigitsCount} observed leading digits...`}</div>
           <br></br>
           <div style={{ color: "red" }}>
             {outputObject.results5pcCritical === "REJECT"
