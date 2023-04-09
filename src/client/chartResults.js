@@ -13,17 +13,20 @@ const chartBenfordResults = (outputArr) => {
 
   const benfordLine = {
     x: [1, 2, 3, 4, 5, 6, 7, 8, 9],
-    y: benfordFreqOfLeadingDigitArrPercentages.slice(1),
+    y: benfordFreqOfLeadingDigitArrPercentages.slice(
+      1,
+      benfordFreqOfLeadingDigitArrPercentages.length
+    ),
     type: "scatter",
     line: { color: "red" },
     name: "Benford Prediction by Leading Digit (%)",
   };
 
   // Convert outputArr elements into decimals in yValuesObserved array
-  const yValuesObserved = outputArr.map((elem) => (elem / 10000).toFixed(4));
+  const yValuesObserved = outputArr.map((elem) => (elem * 1).toFixed(4));
   const observedBars = {
     x: [1, 2, 3, 4, 5, 6, 7, 8, 9],
-    y: yValuesObserved,
+    y: yValuesObserved.slice(1, yValuesObserved.length),
     type: "bar",
     marker: {
       color: "rgb(158,202,0)",

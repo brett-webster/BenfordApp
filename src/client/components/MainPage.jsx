@@ -123,9 +123,8 @@ const MainPage = ({ setChartDisplayBoolean }) => {
           inputObject,
         });
         // ** ADJUST THE BELOW ** Error handle empty array from server
-        if (response.data === "Input data yields EMPTY ARRAY") {
+        if (response.data.outputDataIsEmptyBoolean) {
           setOutputArrayEmptyBoolean(true); // Used as flag for message that outputArr contains no digits
-          // HIDE ANYTHING ON SCREEN???
         } else {
           console.log(
             "VALID DATA, rendering now (after processing on server-side)..."
@@ -137,6 +136,7 @@ const MainPage = ({ setChartDisplayBoolean }) => {
           );
           setOutputObject(response.data);
           // PROCEED TO RENDER DATA (from bundled object -- "outputObject") RECEIVED IN RESPONSE FROM SERVER (first using loading circle)
+          console.log("SUCCESS!!  ", response.data);
         }
       })();
 
@@ -248,8 +248,8 @@ const MainPage = ({ setChartDisplayBoolean }) => {
       </div>
       {/* Do not render chart if SUBMIT button has not yet been pressed OR CLEAR CHART button has not been clicked post-charting */}
       <div>
-        {chartDisplayBoolean && outputObject.resultArr
-          ? chartBenfordResults(outputObject.resultArr)
+        {chartDisplayBoolean && outputObject.arrForChart
+          ? chartBenfordResults(outputObject.arrForChart)
           : ""}
       </div>
       <br></br>
