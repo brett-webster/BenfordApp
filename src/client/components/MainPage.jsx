@@ -92,18 +92,35 @@ const MainPage = ({ setChartDisplayBoolean }) => {
 
   // Need useEffect here to read the updated value of changed variable's state following a re-render (in this case tracking the re-setting of the state of chartDisplayBoolean, then displaying/clearing charting)
   useEffect(() => {
-    if (chartDisplayBoolean)
+    if (chartDisplayBoolean) {
       document.getElementById("chartHanger").style.display = "block";
-    if (!chartDisplayBoolean)
+      document.getElementById("userInputYieldedNoResultsMsg").style.display =
+        "block"; // ADDED 4/9
+    }
+    if (!chartDisplayBoolean) {
       document.getElementById("chartHanger").style.display = "none";
+      document.getElementById("userInputYieldedNoResultsMsg").style.display =
+        "none"; // ADDED 4/9
+    }
   }, [chartDisplayBoolean]); // End useEffect --> ONLY on update to chartDisplayBoolean flag
   // End of useEffect hooks
+
+  useEffect(() => {
+    if (Object.keys(outputObject).length > 0) {
+      document.getElementById("chartHanger").style.display = "block";
+      document.getElementById("outputResultsText").style.display = "block";
+    } else {
+      document.getElementById("chartHanger").style.display = "none";
+      document.getElementById("outputResultsText").style.display = "none";
+    }
+  }, [outputObject]); // ADDED 4/9
 
   // ---------------
 
   // Below submitFormHandler & charChangeHandler functions invoked in return portion of component
   function submitFormHandler(event) {
     event.preventDefault();
+    setOutputObject({}); // ADDED 4/9
     console.log(
       "Submitted data in MainPage, CLIENT-SIDE pre-server: ",
       inputObject
@@ -240,13 +257,13 @@ const MainPage = ({ setChartDisplayBoolean }) => {
             ? "Error:  Date range is incorrect.  PLEASE TRY AGAIN"
             : ""}
         </div>
-        <div style={{ color: "red" }}>
+        <div id="userInputYieldedNoResultsMsg" style={{ color: "red" }}>
           {outputArrayEmptyBoolean
             ? "Company and Date Range input has yielded no results.  PLEASE TRY AGAIN"
             : ""}
         </div>
       </div>
-      {/* Do not render chart if SUBMIT button has not yet been pressed OR CLEAR CHART button has not been clicked post-charting */}
+      {/* Do not render chart if SUBMIT button has not yet been pressed OR CLEAR RESULTS button has not been clicked post-charting */}
       <div>
         {chartDisplayBoolean && outputObject.arrForChart
           ? chartBenfordResults(outputObject.arrForChart)

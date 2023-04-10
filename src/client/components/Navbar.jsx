@@ -15,13 +15,13 @@ const Navbar = ({ currentPagePath, setChartDisplayBoolean }) => {
       document.getElementById("chartHanger").style.display = "none";
   }, [chartDisplayBoolean]);
 
-  function clearChartHandler() {
-    setChartDisplayBoolean(false); // Set state here to remove CLEAR CHART button, tied to useContext API
+  function clearResultsHandler() {
+    setChartDisplayBoolean(false); // Set state here to remove CLEAR RESULTS button, tied to useContext API
   }
 
   function logoutHandler() {
     document.getElementById("chartHanger").style.display = "none";
-    setChartDisplayBoolean(false); // Set state here to remove CLEAR CHART button, tied to useContext API
+    setChartDisplayBoolean(false); // Set state here to remove CLEAR RESULTS button, tied to useContext API
   }
 
   return (
@@ -46,14 +46,14 @@ const Navbar = ({ currentPagePath, setChartDisplayBoolean }) => {
         ) : (
           ""
         )}
-        {/* CLEAR CHART button should only be displayed if on /main page AND boolean value's state = TRUE */}
+        {/* CLEAR RESULTS button should only be displayed if on /main page AND boolean value's state = TRUE */}
         {currentPagePath === "/main" && chartDisplayBoolean ? (
           <button
-            onClick={clearChartHandler}
-            id="clearChartBtn"
+            onClick={clearResultsHandler}
+            id="clearResultsBtn"
             className="navBtn"
           >
-            CLEAR CHART
+            CLEAR RESULTS
           </button>
         ) : (
           ""

@@ -2,7 +2,6 @@ const express = require("express");
 const app = express();
 const path = require("path");
 const fs = require("fs");
-// const getDataFromSECedgarJSONandProcess = require("./getDataFromSECedgarJSONandProcess");
 const processDataController = require("./processDataController.js");
 
 app.use(express.json());
@@ -44,12 +43,6 @@ app.post(
     outputObject.CIK = CIK;
     outputObject.startDate = startDate;
     outputObject.endDate = endDate;
-
-    // OLD DUMMY OUTPUT DATA BELOW -- TO REMOVE & ALSO CHANGE (elem / 10000) in chartBenfordResults.js to (elem / 1), SINCE CORRECT DATA IS NOW FLOWING FROM SERVER-SIDE...
-    // const arr = []; // [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-    // for (let i = 0; i < 10; i++) {
-    //   arr.push(Math.floor(Math.random() * 10000));
-    // }
 
     console.log("outputObject:  ", outputObject);
     return res.status(200).json(outputObject);

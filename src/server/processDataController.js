@@ -4,6 +4,10 @@ const fetch = require("node-fetch");
 const { JSDOM } = require("jsdom");
 const { getLessRecentJSONdata } = require("./getLessRecentJSONdata.js");
 
+// Node.js equivalent of localStorage on client-side (attached to window)
+const LocalStorage = require("node-localstorage").LocalStorage;
+const localStorage = new LocalStorage("./node-localStorage");
+
 const processDataController = {};
 
 // --------
@@ -16,27 +20,47 @@ processDataController.importValidFinancialLineItemsObject = (
   next
 ) => {
   try {
-    console.log("test whether running");
+    console.log("Confirmation that data is currently being processed...");
+    console.log("...timer has started (see 'default:' in CLI)...");
     let timeLabel;
     console.time(timeLabel);
 
-    // NOTE:  CONSIDER STORING LOCALLY & READING IN ONLY IF NOT PRESENT IN node-storage
-    const contents = fs.readFileSync(
-      path.resolve(__dirname, "./validFinancialLineItems.txt")
+    // localStorage.removeItem("validFinancialLineItemsObject");
+    // Using node-localStorage to avoid repeated read-ins of .txt file from server
+    let lineItemsObject = JSON.parse(
+      localStorage.getItem("validFinancialLineItemsObject")
+    );
+    console.log(
+      lineItemsObject,
+      "lineItemsObject in processDataController.importValidFinancialLineItemsObject..."
     );
 
-    let validFinancialLineItemsArr = contents.toString().split(/\r?\n/); // NOTE:  Can add "utf-8" w/in fs.readFileSync IN PLACE of .toString()
+    // Only read in from file if NOT already present in node-storage
+    if (lineItemsObject === null) {
+      console.log(
+        "Node pinging server for validFinancialLineItems.txt, NOT in node localStorage..."
+      );
+      const contents = fs.readFileSync(
+        path.resolve(__dirname, "./validFinancialLineItems.txt")
+      );
 
-    // console.log(typeof contents, contents.toString());
-    // console.log(validFinancialLineItemsArr);
-    // Convert validFinancialLineItems from array into object
-    const lineItemsObject = validFinancialLineItemsArr.reduce(
-      (combined, currentValue) => ({
-        ...combined,
-        [currentValue]: currentValue,
-      }),
-      {}
-    );
+      let validFinancialLineItemsArr = contents.toString().split(/\r?\n/); // NOTE:  Can add "utf-8" w/in fs.readFileSync IN PLACE of .toString()
+
+      // console.log(typeof contents, contents.toString());
+      // console.log(validFinancialLineItemsArr);
+      // Convert validFinancialLineItems from array into object
+      lineItemsObject = validFinancialLineItemsArr.reduce(
+        (combined, currentValue) => ({
+          ...combined,
+          [currentValue]: currentValue,
+        }),
+        {}
+      );
+      localStorage.setItem(
+        "validFinancialLineItemsObject",
+        JSON.stringify(lineItemsObject)
+      );
+    }
 
     res.locals.lineItemsObject = lineItemsObject; // Assign to res.locals
     res.locals.timeLabel = timeLabel;
@@ -444,72 +468,72 @@ processDataController.iterateThruDOMsOfFinalURLarrAndParse = async (
 // --------
 
 processDataController.compressOutputArrs = (req, res, next) => {
-  //   try {
-  // Iterate thru each subarray containing raw financial statement numbers, placing the leading digits frequencies into their respective slot in each new subarray
-  const { combinedFinalArrOfFinancialNums } = res.locals;
+  try {
+    // Iterate thru each subarray containing raw financial statement numbers, placing the leading digits frequencies into their respective slot in each new subarray
+    const { combinedFinalArrOfFinancialNums } = res.locals;
 
-  // console.log(
-  //   "combinedFinalArrOfFinancialNums: ",
-  //   combinedFinalArrOfFinancialNums.length,
-  //   combinedFinalArrOfFinancialNums,
-  //   "combinedFinalArrOfFinancialNums...in compressOutputArrs..."
-  // );
+    // console.log(
+    //   "combinedFinalArrOfFinancialNums: ",
+    //   combinedFinalArrOfFinancialNums.length,
+    //   combinedFinalArrOfFinancialNums,
+    //   "combinedFinalArrOfFinancialNums...in compressOutputArrs..."
+    // );
 
-  const outerArr = [];
-  for (let i = 0; i < combinedFinalArrOfFinancialNums.length; i++) {
-    const observedFreqOfLeadingDigitArrCount = Array(10).fill(0);
-    combinedFinalArrOfFinancialNums[i].forEach((element) => {
-      if (element[0] !== "0" && !element.includes("—")) {
-        observedFreqOfLeadingDigitArrCount[Number(element[0])]++;
-      }
+    const outerArr = [];
+    for (let i = 0; i < combinedFinalArrOfFinancialNums.length; i++) {
+      const observedFreqOfLeadingDigitArrCount = Array(10).fill(0);
+      combinedFinalArrOfFinancialNums[i].forEach((element) => {
+        if (element[0] !== "0" && !element.includes("—")) {
+          observedFreqOfLeadingDigitArrCount[Number(element[0])]++;
+        }
+      });
+      outerArr.push(observedFreqOfLeadingDigitArrCount);
+    }
+    console.log("outerArr (processed raw data into subarrays): ", outerArr);
+
+    // With the processed array of subarrays (outerArr) containing leading frequencies, merge these subarrays into a single, summed final results array for displaying
+    let outputDataIsEmptyBoolean = true; // Adding flag here to send back to client for presentation of result, default set to empty data
+    // TESTING
+    // let arr1 = [NaN, 2, 3, 4];
+    // const arr2 = [4, 3, 2, "cat"];
+    // const arr3 = [0, 5, 6, 7];
+    // const outerArr = [arr1, arr2, arr3];
+
+    const zeroArr = Array(10).fill(0); // WHEN TESTING, ENSURE # 10 matches test array size -- same for summedSubArrs[i] loop below
+
+    // Populate all NON-INTEGER elements w/ 0s in initial subarray to avoid errors in reducer method
+    if (outerArr[0]) {
+      outerArr[0].forEach((elem, index, arr) => {
+        if (!Number.isInteger(elem)) arr[index] = 0;
+      });
+    } else console.log("No output data");
+    // console.log(outerArr);
+
+    const summedSubArrs = outerArr.reduce((cumulativeSubArr, currentSubArr) => {
+      const newArr = cumulativeSubArr.map((elem, index) => {
+        if (Number.isInteger(currentSubArr[index]))
+          return elem + currentSubArr[index];
+        else return elem;
+      }); // end map method
+      return newArr;
+    }, zeroArr);
+    console.log(summedSubArrs);
+
+    // An array of 10 integers should always be sent back -- return "empty feedback" in case where all digits = 0 (no NaNs or errors should exist) <-- noOutputDataBoolean = true.  Attach this to outputObject & send back to client.  If true, signal to NOT render any charting but instead a message
+    for (let i = 0; i < 10; i++) {
+      if (summedSubArrs[i] !== 0) outputDataIsEmptyBoolean = false;
+    }
+
+    // NOTE:  test vs KO & CRM  -- most importantly, GS and IBM (which throw memory heap exceeded errors --> "FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory")
+    res.locals.outputDataIsEmptyBoolean = outputDataIsEmptyBoolean; // Assign to res.locals
+    res.locals.finalArrOfFreqs = summedSubArrs;
+    return next();
+  } catch (err) {
+    return next({
+      log: "processDataController.compressOutputArrs:  Middleware error in collapsing subarray results into a single array for analysis/presentation",
+      message: { err: `processDataController.compressOutputArrs: ${err}` },
     });
-    outerArr.push(observedFreqOfLeadingDigitArrCount);
   }
-  console.log("outerArr (processed raw data into subarrays): ", outerArr);
-
-  // With the processed array of subarrays (outerArr) containing leading frequencies, merge these subarrays into a single, summed final results array for displaying
-  let outputDataIsEmptyBoolean = true; // Adding flag here to send back to client for presentation of result, default set to empty data
-  // TESTING
-  // let arr1 = [NaN, 2, 3, 4];
-  // const arr2 = [4, 3, 2, "cat"];
-  // const arr3 = [0, 5, 6, 7];
-  // const outerArr = [arr1, arr2, arr3];
-
-  const zeroArr = Array(10).fill(0); // WHEN TESTING, ENSURE # 10 matches test array size -- same for summedSubArrs[i] loop below
-
-  // Populate all NON-INTEGER elements w/ 0s in initial subarray to avoid errors in reducer method
-  if (outerArr[0]) {
-    outerArr[0].forEach((elem, index, arr) => {
-      if (!Number.isInteger(elem)) arr[index] = 0;
-    });
-  } else console.log("No output data");
-  // console.log(outerArr);
-
-  const summedSubArrs = outerArr.reduce((cumulativeSubArr, currentSubArr) => {
-    const newArr = cumulativeSubArr.map((elem, index) => {
-      if (Number.isInteger(currentSubArr[index]))
-        return elem + currentSubArr[index];
-      else return elem;
-    }); // end map method
-    return newArr;
-  }, zeroArr);
-  console.log(summedSubArrs);
-
-  // An array of 10 integers should always be sent back -- return "empty feedback" in case where all digits = 0 (no NaNs or errors should exist) <-- noOutputDataBoolean = true.  Attach this to outputObject & send back to client.  If true, signal to NOT render any charting but instead a message
-  for (let i = 0; i < 10; i++) {
-    if (summedSubArrs[i] !== 0) outputDataIsEmptyBoolean = false;
-  }
-
-  // NOTE:  test vs KO & CRM  -- most importantly, GS and IBM (which throw memory heap exceeded errors --> "FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory")
-  res.locals.outputDataIsEmptyBoolean = outputDataIsEmptyBoolean; // Assign to res.locals
-  res.locals.finalArrOfFreqs = summedSubArrs;
-  return next();
-  //   } catch (err) {
-  //     return next({
-  //       log: "processDataController.compressOutputArrs:  Middleware error in collapsing subarray results into a single array for analysis/presentation",
-  //       message: { err: `processDataController.compressOutputArrs: ${err}` },
-  //     });
-  //   }
 };
 
 // --------

@@ -27,7 +27,6 @@ function getLessRecentJSONdata(embeddedJSONObject, fullCIK) {
         accessionNumberArr[i].replace(/-/g, "") +
         "/" +
         primaryDocumentArr[i];
-      // console.log(assembledURLhtm);
       subArrOfassembledURLs.push(assembledURLhtm);
     }
   }
