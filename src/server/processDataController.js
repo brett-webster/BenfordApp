@@ -274,90 +274,88 @@ processDataController.iterateThruDOMsOfFinalURLarrAndParse = async (
   res,
   next
 ) => {
-  try {
-    const { URLinTxtFormatArr, lineItemsObject } = res.locals;
+  //   try {
+  const { URLinTxtFormatArr, lineItemsObject } = res.locals;
 
-    const validFinancialLineItemsObject = lineItemsObject;
-    let validFinancialLineItemsArr = Object.values(
-      validFinancialLineItemsObject
-    );
-    const combinedFinalArrOfFinancialNums = [];
+  const validFinancialLineItemsObject = lineItemsObject;
+  let validFinancialLineItemsArr = Object.values(validFinancialLineItemsObject);
+  const combinedFinalArrOfFinancialNums = [];
 
-    // Iterate through entirety of URLinTxtFormatArr array, creating a new DOM for each URL, parsing each
-    for (let i = 0; i < URLinTxtFormatArr.length; i++) {
-      // Initialize DOM & pull relevant parts of webpage structure based on below tree structure
-      const dom = new JSDOM(URLinTxtFormatArr[i]);
+  // Iterate through entirety of URLinTxtFormatArr array, creating a new DOM for each URL, parsing each
+  for (let i = 0; i < URLinTxtFormatArr.length; i++) {
+    // Initialize DOM & pull relevant parts of webpage structure based on below tree structure
+    const dom = new JSDOM(URLinTxtFormatArr[i]);
 
-      const lineItemNameAndNumObject = {};
-      for (let j = 0; j < validFinancialLineItemsArr.length; j++) {
-        //Create DOM of each valid financial line item (used to search SEC EDGAR URL filing previously pulled down)
-        const namedTextElements = dom.window.document.getElementsByName(
-          validFinancialLineItemsArr[j]
-        );
-
-        // Filter for financial line items (1) actually present within company's filing URL and (2) included in the master list (validFinancialLineItemsObject)
-        if (
-          namedTextElements.length > 0 &&
-          validFinancialLineItemsArr[j] in validFinancialLineItemsObject
-        ) {
-          const financialLineItemName =
-            namedTextElements[0].getAttribute("name");
-
-          // Filter out irrelevant items, adding relevant items to a new object lineItemNameAndNumObject with key/value pair as follows: (1) concatenated financial line item name attribute + its corresponding value is KEY (2) and the corresponding values as VALUE (in string format)
-          // This key structure auto-dedupes as no duplicate keys are permitted in JS objects (a VERY unlikely edge case is where a numeric is repeated across time for the SAME financial line item names)
-          for (let k = 0; k < namedTextElements.length; k++) {
-            const key =
-              namedTextElements[0].getAttribute("name") +
-              namedTextElements[k].innerHTML;
-            const value = namedTextElements[k].innerHTML;
-            lineItemNameAndNumObject[key] = value;
-          } // end inner for loop
-        }
-
-        // Tracking heap's dynamic memory allocation to test & avoid 'fatal error' --> "FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory"
-        // const used = process.memoryUsage();
-        // for (let key in used) {
-        //   //   console.log(
-        //   //     `${key} ${Math.round(used[key] / 1024 / 1024 / 1024)} GB`
-        //   //   );
-        //   console.log(
-        //     `${key} ${Math.round((used[key] / 1024 / 1024) * 100) / 100} MB`
-        //   );
-        // }
-      } // end outer for loop
-
-      // //Iterate through array containing valid financial line items from master list .txt file (validFinancialLineItemsObject), extracting into final array those contained in the lineItemNameAndNumObject just extracted from the newly created DOMs
-      const finalArrOfLineItems = [];
-      const finalArrOfFinancialNums = [];
-      let counter = 0;
-      // Only add pairs possessing an acceptable key format
-      for (let [key, value] of Object.entries(lineItemNameAndNumObject)) {
-        if (key[key.length - 1] !== ">") {
-          counter++;
-          // console.log(key, value, counter);
-          finalArrOfLineItems.push(key);
-          finalArrOfFinancialNums.push(value);
-        }
-      }
-      console.log(
-        finalArrOfFinancialNums.length,
-        finalArrOfFinancialNums,
-        "finalArrOfFinancialNums..."
+    const lineItemNameAndNumObject = {};
+    for (let j = 0; j < validFinancialLineItemsArr.length; j++) {
+      //Create DOM of each valid financial line item (used to search SEC EDGAR URL filing previously pulled down)
+      const namedTextElements = dom.window.document.getElementsByName(
+        validFinancialLineItemsArr[j]
       );
-      combinedFinalArrOfFinancialNums.push(finalArrOfFinancialNums);
-    } // end outermost for loop
 
-    res.locals.combinedFinalArrOfFinancialNums =
-      combinedFinalArrOfFinancialNums; // Assign to res.locals -- this is the combined array of raw results subarrays containing financial numerics to be processed and aggregated into single cumulative results array [10 elements] in next middleware
-    return next();
-  } catch (err) {
-    return next({
-      log: "processDataController.iterateThruDOMsOfFinalURLarrAndParse:  Middleware error occurred in creating & parsing DOM of individual financial statement URL to tally leading digit counts for select financial line items",
-      message: {
-        err: `processDataController.iterateThruDOMsOfFinalURLarrAndParse: ${err}`,
-      },
-    });
-  }
+      // Filter for financial line items (1) actually present within company's filing URL and (2) included in the master list (validFinancialLineItemsObject)
+      if (
+        namedTextElements.length > 0 &&
+        validFinancialLineItemsArr[j] in validFinancialLineItemsObject
+      ) {
+        const financialLineItemName = namedTextElements[0].getAttribute("name");
+
+        // Filter out irrelevant items, adding relevant items to a new object lineItemNameAndNumObject with key/value pair as follows: (1) concatenated financial line item name attribute + its corresponding value is KEY (2) and the corresponding values as VALUE (in string format)
+        // This key structure auto-dedupes as no duplicate keys are permitted in JS objects (a VERY unlikely edge case is where a numeric is repeated across time for the SAME financial line item names)
+        for (let k = 0; k < namedTextElements.length; k++) {
+          const key =
+            namedTextElements[0].getAttribute("name") +
+            namedTextElements[k].innerHTML;
+          const value = namedTextElements[k].innerHTML;
+          lineItemNameAndNumObject[key] = value;
+        } // end inner for loop
+      }
+
+      // Tracking heap's dynamic memory allocation to test & avoid 'fatal error' --> "FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory"
+      const used = process.memoryUsage();
+      for (let key in used) {
+        //   console.log(
+        //     `${key} ${Math.round(used[key] / 1024 / 1024 / 1024)} GB`
+        //   );
+        console.log(
+          `${key} ${Math.round((used[key] / 1024 / 1024) * 100) / 100} MB`
+        );
+      }
+    } // end outer for loop
+    dom.window.close(); // ADDED 4/11
+
+    // //Iterate through array containing valid financial line items from master list .txt file (validFinancialLineItemsObject), extracting into final array those contained in the lineItemNameAndNumObject just extracted from the newly created DOMs
+    const finalArrOfLineItems = [];
+    const finalArrOfFinancialNums = [];
+    let counter = 0;
+    // Only add pairs possessing an acceptable key format
+    for (let [key, value] of Object.entries(lineItemNameAndNumObject)) {
+      if (key[key.length - 1] !== ">") {
+        counter++;
+        // console.log(key, value, counter);
+        finalArrOfLineItems.push(key);
+        finalArrOfFinancialNums.push(value);
+      }
+    }
+    console.log(
+      finalArrOfFinancialNums.length,
+      finalArrOfFinancialNums,
+      "finalArrOfFinancialNums..."
+    );
+    combinedFinalArrOfFinancialNums.push(finalArrOfFinancialNums);
+  } // end outermost for loop
+
+  res.locals.combinedFinalArrOfFinancialNums = combinedFinalArrOfFinancialNums; // Assign to res.locals -- this is the combined array of raw results subarrays containing financial numerics to be processed and aggregated into single cumulative results array [10 elements] in next middleware
+  return next();
+  //   }
+  //   catch (err) {
+  //     return next({
+  //       log: "processDataController.iterateThruDOMsOfFinalURLarrAndParse:  Middleware error occurred in creating & parsing DOM of individual financial statement URL to tally leading digit counts for select financial line items",
+  //       message: {
+  //         err: `processDataController.iterateThruDOMsOfFinalURLarrAndParse: ${err}`,
+  //       },
+  //     });
+  //   }
 };
 
 // --------
