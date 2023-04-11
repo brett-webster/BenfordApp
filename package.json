@@ -4,8 +4,8 @@
   "description": "",
   "main": "src/client/index.js",
   "scripts": {
-    "start": "NODE_ENV=production node src/server/server.js",
-    "dev": "NODE_ENV=development nodemon src/server/server.js & NODE_ENV=development webpack-dev-server --open",
+    "start": "NODE_ENV=production node --max-old-space-size=8192 src/server/server.js",
+    "dev": "NODE_ENV=development nodemon --max-old-space-size=8192 src/server/server.js & NODE_ENV=development webpack-dev-server --open",
     "build": "webpack",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

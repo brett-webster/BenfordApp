@@ -30,10 +30,10 @@ processDataController.importValidFinancialLineItemsObject = (
     let lineItemsObject = JSON.parse(
       localStorage.getItem("validFinancialLineItemsObject")
     );
-    console.log(
-      lineItemsObject,
-      "lineItemsObject in processDataController.importValidFinancialLineItemsObject..."
-    );
+    // console.log(
+    //   lineItemsObject,
+    //   "lineItemsObject in processDataController.importValidFinancialLineItemsObject..."
+    // );
 
     // Only read in from file if NOT already present in node-storage
     if (lineItemsObject === null) {
@@ -46,8 +46,6 @@ processDataController.importValidFinancialLineItemsObject = (
 
       let validFinancialLineItemsArr = contents.toString().split(/\r?\n/); // NOTE:  Can add "utf-8" w/in fs.readFileSync IN PLACE of .toString()
 
-      // console.log(typeof contents, contents.toString());
-      // console.log(validFinancialLineItemsArr);
       // Convert validFinancialLineItems from array into object
       lineItemsObject = validFinancialLineItemsArr.reduce(
         (combined, currentValue) => ({
@@ -105,10 +103,6 @@ processDataController.getMostRecentJSONdataAndReturn = async (
       },
     });
     const mainJSONObj = await response.json();
-    // console.log(
-    //   mainJSONObj,
-    //   "mainJSONObj in processDataController.getMostRecentJSONdataAndReturn, initial fetch..."
-    // );
 
     const cik = mainJSONObj.cik;
     const formArr = mainJSONObj.filings.recent.form;
@@ -197,16 +191,18 @@ processDataController.createLessRecentURLsAndGrabJSON = async (
           "https://data.sec.gov/submissions/" +
           mainJSONObj.filings.files[i].name;
 
-        fetchRequest = fetch(assembledURLJSON, {
+        const fetchRequest = await fetch(assembledURLJSON, {
           method: "GET",
           headers: {
-            // 'Content-Type': 'application/json',
-            //  INSTRUCTIONS for SETTING user-agent REQUEST HEADER:  https://www.sec.gov/os/accessing-edgar-data
             "User-Agent": "Brett Webster websterbrett@gmail.com",
             "Accept-Encoding": "gzip, deflate",
           },
-        }).then((response) => response.text());
-        promisesArr.push(fetchRequest);
+        });
+        const fetchRequestText = await fetchRequest.text();
+        promisesArr.push(fetchRequestText);
+        // .then((response) => response.text());  // Converted
+        // promisesArr.push(fetchRequest);  // Converted
+
         console.log(
           assembledURLJSON.length,
           assembledURLJSON,
@@ -215,66 +211,20 @@ processDataController.createLessRecentURLsAndGrabJSON = async (
       }
     }
 
-    // console.log("promisesArr: ", promisesArr);
-    // Promise.all(promisesArr).then((values) => console.log("values", values));
-
     // Use Promise.all for multiple fetch requests in parallel to capture entirety of data output once processing of all parts is complete
-    const additionalJSONsinTxtFormat = Promise.all(promisesArr);
-    additionalJSONsinTxtFormat.then((JSONinTxtFormatArr) => {
-      // console.log(JSONinTxtFormatArr[2]);
-      // Convert downloaded JSON text back into object using .parse() method
-      for (let i = 0; i < JSONinTxtFormatArr.length; i++) {
-        embeddedJSONObject = JSON.parse(JSONinTxtFormatArr[i]);
-        const subArrOfassembledURLsToAdd = getLessRecentJSONdata(
-          embeddedJSONObject,
-          fullCIK
-        ); // Helper function, imported & invoked to assemble non-recent URLs of financial statements into a subArray to be added to main array
-        arrOfassembledURLs.concat(subArrOfassembledURLsToAdd);
-      }
+    const JSONinTxtFormatArr = await Promise.all(promisesArr); // CHANGED FROM additionalJSONsinTxtFormat to JSONinTxtFormatArr, converted from .then() promise-chaining
 
-      res.locals.arrOfassembledURLs = arrOfassembledURLs; // Assign to res.locals, updating .arrOfassembledURLs property -- CONFIRM THIS WORKS HERE w/ scoping!!!
-    });
+    // Convert downloaded JSON text back into object using .parse() method
+    for (let i = 0; i < JSONinTxtFormatArr.length; i++) {
+      embeddedJSONObject = JSON.parse(JSONinTxtFormatArr[i]);
+      const subArrOfassembledURLsToAdd = getLessRecentJSONdata(
+        embeddedJSONObject,
+        fullCIK
+      ); // Helper function, imported & invoked to assemble non-recent URLs of financial statements into a subArray to be added to main array
+      arrOfassembledURLs.concat(subArrOfassembledURLsToAdd);
+    }
 
-    // *******************
-
-    // // ULTIMATELY USE THE BELOW...
-    // // Extract JSON links going back MORE THAN 1,000 entries into a separate array, iterate through this array to add additional, valid historic URLs onto aggregate array
-    // const promisesArr = [];
-    // for (let i = 0; i < mainJSONObj.filings.files.length; i++) {
-    //   // Conditional ensures filing range falls WITHIN user-input range so as NOT to download unneeded data
-    //   if (
-    //     mainJSONObj.filings.files[i].filingFrom >=
-    //       startDateforExpandedRange &&
-    //     mainJSONObj.filings.files[i].filingTo <= endDateforExpandedRange
-    //   ) {
-    //     const assembledURLJSON =
-    //       "https://data.sec.gov/submissions/" +
-    //       mainJSONObj.filings.files[i].name;
-
-    //     const fetchRequest = await fetch(assembledURLJSON, {
-    //       method: "GET",
-    //       headers: {
-    //         "User-Agent": "Brett Webster websterbrett@gmail.com",
-    //         "Accept-Encoding": "gzip, deflate",
-    //       },
-    //     });
-    //     const fetchRequestTextResponse = await fetchRequest.text();
-    //     promisesArr.push(fetchRequestTextResponse);
-    //   }
-    // }
-
-    // // Use Promise.all for multiple fetch requests in parallel to capture entirety of data output once processing of all parts is complete
-    // const JSONinTxtFormatArr = await Promise.all(promisesArr);
-
-    // // Convert downloaded JSON text back into object using .parse() method
-    // for (let i = 0; i < JSONinTxtFormatArr.length; i++) {
-    //   embeddedJSONObject = JSON.parse(JSONinTxtFormatArr[i]);
-    //   const subArrOfassembledURLsToAdd =
-    //     getLessRecentJSONdata(embeddedJSONObject); // Helper function, imported & invoked to assemble non-recent URLs of financial statements into a subArray to be added to main array
-    //   arrOfassembledURLs.concat(subArrOfassembledURLsToAdd);
-    // }
-
-    // res.locals.arrOfassembledURLs = arrOfassembledURLs; // Assign to res.locals, updating .arrOfassembledURLs property
+    res.locals.arrOfassembledURLs = arrOfassembledURLs; // Assign to res.locals, updating .arrOfassembledURLs property
     return next();
   } catch (err) {
     return next({
@@ -297,62 +247,29 @@ processDataController.fetchAllURLsInTxtFormat = async (req, res, next) => {
     // Construct another fetchRequest array containing assembled URLs and again use Promise.all for multiple fetch requests in parallel to capture entirety of data output
     promisesArr = [];
     for (let i = 0; i < arrOfassembledURLs.length; i++) {
-      fetchRequest = fetch(arrOfassembledURLs[i], {
+      const fetchRequest = await fetch(arrOfassembledURLs[i], {
         method: "GET",
         headers: {
-          // 'Content-Type': 'application/json',
-          //  INSTRUCTIONS for SETTING user-agent REQUEST HEADER:  https://www.sec.gov/os/accessing-edgar-data
           "User-Agent": "Brett Webster websterbrett@gmail.com",
           "Accept-Encoding": "gzip, deflate",
         },
-      }).then((response) => response.text());
-      promisesArr.push(fetchRequest);
+      });
+      const fetchRequestText = await fetchRequest.text();
+      // .then((response) => response.text());  // Converted
+      //   promisesArr.push(fetchRequest);  // Converted
+      promisesArr.push(fetchRequestText);
     }
 
     // Use Promise.all for multiple fetch requests in parallel to capture entirety of data output once processing of all parts is complete
-    const allURLsInTxtFormat = Promise.all(promisesArr);
+    const URLinTxtFormatArr = await Promise.all(promisesArr);
 
-    // NOTE:  Can assign set variable = "await allURLsInTxtFormat..." to console.log it below w/in this middleware fxn for testing purposes...but this is NOT needed bc merely including "await" here allows res.locals.URLinTxtFormatArr to be assigned w/in this same scope & persisted outside of it on thru entire chain
-    await allURLsInTxtFormat.then((URLinTxtFormatArr) => {
-      // console.log(URLinTxtFormatArr.length);
-      // Initialize output file for ease of reference
-      //   fs.writeFile("./output2.txt", "", (err) => {
-      //     if (err) throw err;
-      //   });
-      res.locals.URLinTxtFormatArr = URLinTxtFormatArr; // Assign to res.locals -- CONFIRM THIS WORKS HERE w/ scoping since inside Promise.thenable!!!
-      //   console.log(
-      //     "INSIDE res.locals.URLinTxtFormatArr: ",
-      //     res.locals.URLinTxtFormatArr.length,
-      //     "INSIDE res.locals.URLinTxtFormatArr... w/ .then() chaining"
-      //   );
-      return URLinTxtFormatArr;
-    });
-    // console.log(
-    //   "OUTSIDE res.locals.URLinTxtFormatArr: ",
-    //   res.locals.URLinTxtFormatArr.length,
-    //   "OUTSIDE res.locals.URLinTxtFormatArr... w/ .then() chaining"
-    // );
-
-    // *******************
-
-    // ULTIMATELY USE THE BELOW...
-    // promisesArr = [];
-    // for (let i = 0; i < arrOfassembledURLs.length; i++) {
-    //   const fetchRequest = await fetch(arrOfassembledURLs[i], {
-    //     method: "GET",
-    //     // body: JSON.stringify(body),
-    //     headers: {
-    //       "User-Agent": "Brett Webster websterbrett@gmail.com",
-    //       "Accept-Encoding": "gzip, deflate",
-    //     },
+    // const allURLsInTxtFormat = Promise.all(promisesArr);  // OLD, to DELETE
+    // await allURLsInTxtFormat.then((URLinTxtFormatArr) => {
+    //     res.locals.URLinTxtFormatArr = URLinTxtFormatArr; // Assign to res.locals
+    //     return URLinTxtFormatArr;
     //   });
-    //   const fetchRequestTextResponse = await fetchRequest.text();
-    //   promisesArr.push(fetchRequestTextResponse); // SHOULD THIS SIMPLY BE fetchRequest INSTEAD??
-    // }
-    // const URLinTxtFormatArr = await Promise.all(promisesArr);
 
-    // console.log('URLinTxtFormatArr: ', URLinTxtFormatArr, "URLinTxtFormatArr... async await w/ Promise.all")
-    // res.locals.URLinTxtFormatArr = URLinTxtFormatArr; // Assign to res.locals
+    res.locals.URLinTxtFormatArr = URLinTxtFormatArr; // Assign to res.locals
     return next();
   } catch (err) {
     return next({
@@ -372,30 +289,18 @@ processDataController.iterateThruDOMsOfFinalURLarrAndParse = async (
   next
 ) => {
   try {
-    const { URLinTxtFormatArr } = res.locals;
-    const combinedFinalArrOfFinancialNums = [];
+    const { URLinTxtFormatArr, lineItemsObject } = res.locals;
 
-    // console.log(
-    //   "URLinTxtFormatArr: ",
-    //   URLinTxtFormatArr.length,
-    //   URLinTxtFormatArr,
-    //   "URLinTxtFormatArr...in iterateThru..."
-    // );
+    const validFinancialLineItemsObject = lineItemsObject;
+    let validFinancialLineItemsArr = Object.values(
+      validFinancialLineItemsObject
+    );
+    const combinedFinalArrOfFinancialNums = [];
 
     // Iterate through entirety of URLinTxtFormatArr array, creating a new DOM for each URL, parsing each
     for (let i = 0; i < URLinTxtFormatArr.length; i++) {
       // Initialize DOM & pull relevant parts of webpage structure based on below tree structure
       const dom = new JSDOM(URLinTxtFormatArr[i]);
-      const validFinancialLineItemsObject = res.locals.lineItemsObject;
-
-      // Iterate thru entire validFinancialLineItemsObject once converted to array validFinancialLineItemsArr, checking for each Name descriptor & pulling out text for each
-      //   console.log(
-      //     "validFinancialLineItemsObject: ",
-      //     validFinancialLineItemsObject
-      //   );
-      let validFinancialLineItemsArr = Object.values(
-        validFinancialLineItemsObject
-      );
 
       const lineItemNameAndNumObject = {};
       for (let j = 0; j < validFinancialLineItemsArr.length; j++) {
@@ -403,7 +308,6 @@ processDataController.iterateThruDOMsOfFinalURLarrAndParse = async (
         const namedTextElements = dom.window.document.getElementsByName(
           validFinancialLineItemsArr[j]
         );
-        // console.log(namedTextElements.length);
 
         // Filter for financial line items (1) actually present within company's filing URL and (2) included in the master list (validFinancialLineItemsObject)
         if (
@@ -412,8 +316,6 @@ processDataController.iterateThruDOMsOfFinalURLarrAndParse = async (
         ) {
           const financialLineItemName =
             namedTextElements[0].getAttribute("name");
-          const financialLineItemValuesArr = [];
-          // console.log(financialLineItemName, namedTextElements.length);
 
           // Filter out irrelevant items, adding relevant items to a new object lineItemNameAndNumObject with key/value pair as follows: (1) concatenated financial line item name attribute + its corresponding value is KEY (2) and the corresponding values as VALUE (in string format)
           // This key structure auto-dedupes as no duplicate keys are permitted in JS objects (a VERY unlikely edge case is where a numeric is repeated across time for the SAME financial line item names)
@@ -424,12 +326,19 @@ processDataController.iterateThruDOMsOfFinalURLarrAndParse = async (
             const value = namedTextElements[k].innerHTML;
             lineItemNameAndNumObject[key] = value;
           } // end inner for loop
-          // const numObservations = Object.keys(lineItemNameAndNumObject).length;
-          // console.log(numObservations);
         }
-      } // end outer for loop
 
-      // console.log(lineItemNameAndNumObject);
+        // Tracking heap's dynamic memory allocation to test & avoid 'fatal error' --> "FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory"
+        // const used = process.memoryUsage();
+        // for (let key in used) {
+        //   //   console.log(
+        //   //     `${key} ${Math.round(used[key] / 1024 / 1024 / 1024)} GB`
+        //   //   );
+        //   console.log(
+        //     `${key} ${Math.round((used[key] / 1024 / 1024) * 100) / 100} MB`
+        //   );
+        // }
+      } // end outer for loop
 
       // //Iterate through array containing valid financial line items from master list .txt file (validFinancialLineItemsObject), extracting into final array those contained in the lineItemNameAndNumObject just extracted from the newly created DOMs
       const finalArrOfLineItems = [];
@@ -472,13 +381,6 @@ processDataController.compressOutputArrs = (req, res, next) => {
     // Iterate thru each subarray containing raw financial statement numbers, placing the leading digits frequencies into their respective slot in each new subarray
     const { combinedFinalArrOfFinancialNums } = res.locals;
 
-    // console.log(
-    //   "combinedFinalArrOfFinancialNums: ",
-    //   combinedFinalArrOfFinancialNums.length,
-    //   combinedFinalArrOfFinancialNums,
-    //   "combinedFinalArrOfFinancialNums...in compressOutputArrs..."
-    // );
-
     const outerArr = [];
     for (let i = 0; i < combinedFinalArrOfFinancialNums.length; i++) {
       const observedFreqOfLeadingDigitArrCount = Array(10).fill(0);
@@ -493,13 +395,8 @@ processDataController.compressOutputArrs = (req, res, next) => {
 
     // With the processed array of subarrays (outerArr) containing leading frequencies, merge these subarrays into a single, summed final results array for displaying
     let outputDataIsEmptyBoolean = true; // Adding flag here to send back to client for presentation of result, default set to empty data
-    // TESTING
-    // let arr1 = [NaN, 2, 3, 4];
-    // const arr2 = [4, 3, 2, "cat"];
-    // const arr3 = [0, 5, 6, 7];
-    // const outerArr = [arr1, arr2, arr3];
 
-    const zeroArr = Array(10).fill(0); // WHEN TESTING, ENSURE # 10 matches test array size -- same for summedSubArrs[i] loop below
+    const zeroArr = Array(10).fill(0); // Initialize starting array populated w/ 0s
 
     // Populate all NON-INTEGER elements w/ 0s in initial subarray to avoid errors in reducer method
     if (outerArr[0]) {
@@ -548,14 +445,6 @@ processDataController.calculateAndDisplayBenfordResults = (req, res, next) => {
       arrOfassembledURLs,
       timeLabel,
     } = res.locals;
-
-    // BELOW SHIFTED UP TO compressOutputArrs function - TO REMOVE
-    //   let observedFreqOfLeadingDigitArrCount = Array(10).fill(0);
-    //   finalArrOfNums.forEach((element) => {
-    //     if (element[0] !== "0" && !element.includes("—")) {
-    //       observedFreqOfLeadingDigitArrCount[Number(element[0])]++;
-    //     }
-    //   });
 
     const sumOfLeadingDigitsCount = finalArrOfFreqs.reduce(
       (accumulator, value) => {
@@ -641,3 +530,15 @@ processDataController.calculateAndDisplayBenfordResults = (req, res, next) => {
 module.exports = processDataController;
 
 // --------
+
+// Node.js memory allocation error --> 'JavaScript heap out of memory' - TO REMOVE
+// INSERT INTO package.json?
+// --expose-gc
+//  https://gist.github.com/vsure/339dc0a6bc91976ec090
+
+//  Currently set @ 8192 = 8GB
+// "start": "NODE_ENV=production node --max-old-space-size=2048 src/server/server.js"
+// "dev": "NODE_ENV=development nodemon --max-old-space-size=2048 src/server/server.js & NODE_ENV=development webpack-dev-server --open",
+
+// "start": "NODE_ENV=production node --inspect src/server/server.js",
+// "dev": "NODE_ENV=development nodemon --inspect src/server/server.js & NODE_ENV=development webpack-dev-server --open",

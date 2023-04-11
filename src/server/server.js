@@ -121,15 +121,7 @@ app.get("/api/getCompanyCIKtickerList", (req, res) => {
   const companyfilerCIKlistObjFINAL = fs.readFileSync(
     path.resolve(__dirname, "../client/company_cik_and_tickers_FINAL.json")
   );
-  // BELOW MERELY TESTS -- TO REMOVE
-  // console.log(
-  //   JSON.parse(companyfilerCIKlistObjFINAL),
-  //   typeof companyfilerCIKlistObjFINAL, // <--- yields type Buffer (object NOT string) w/o JSON.parse()
-  //   "Babcock & Wilcox Enterprises, Inc. ",
-  //   JSON.parse(companyfilerCIKlistObjFINAL)[
-  //     "Babcock & Wilcox Enterprises, Inc.".toUpperCase()
-  //   ]
-  // );
+
   // Need to convert Buffer object into a string before returning response, otherwise can't easily work w/ data type on client side
   return res.status(200).json(String(companyfilerCIKlistObjFINAL));
 });
