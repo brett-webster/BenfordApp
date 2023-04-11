@@ -30,10 +30,6 @@ processDataController.importValidFinancialLineItemsObject = (
     let lineItemsObject = JSON.parse(
       localStorage.getItem("validFinancialLineItemsObject")
     );
-    // console.log(
-    //   lineItemsObject,
-    //   "lineItemsObject in processDataController.importValidFinancialLineItemsObject..."
-    // );
 
     // Only read in from file if NOT already present in node-storage
     if (lineItemsObject === null) {
@@ -200,8 +196,6 @@ processDataController.createLessRecentURLsAndGrabJSON = async (
         });
         const fetchRequestText = await fetchRequest.text();
         promisesArr.push(fetchRequestText);
-        // .then((response) => response.text());  // Converted
-        // promisesArr.push(fetchRequest);  // Converted
 
         console.log(
           assembledURLJSON.length,
@@ -255,19 +249,11 @@ processDataController.fetchAllURLsInTxtFormat = async (req, res, next) => {
         },
       });
       const fetchRequestText = await fetchRequest.text();
-      // .then((response) => response.text());  // Converted
-      //   promisesArr.push(fetchRequest);  // Converted
       promisesArr.push(fetchRequestText);
     }
 
     // Use Promise.all for multiple fetch requests in parallel to capture entirety of data output once processing of all parts is complete
     const URLinTxtFormatArr = await Promise.all(promisesArr);
-
-    // const allURLsInTxtFormat = Promise.all(promisesArr);  // OLD, to DELETE
-    // await allURLsInTxtFormat.then((URLinTxtFormatArr) => {
-    //     res.locals.URLinTxtFormatArr = URLinTxtFormatArr; // Assign to res.locals
-    //     return URLinTxtFormatArr;
-    //   });
 
     res.locals.URLinTxtFormatArr = URLinTxtFormatArr; // Assign to res.locals
     return next();
@@ -421,7 +407,6 @@ processDataController.compressOutputArrs = (req, res, next) => {
       if (summedSubArrs[i] !== 0) outputDataIsEmptyBoolean = false;
     }
 
-    // NOTE:  test vs KO & CRM  -- most importantly, GS and IBM (which throw memory heap exceeded errors --> "FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory")
     res.locals.outputDataIsEmptyBoolean = outputDataIsEmptyBoolean; // Assign to res.locals
     res.locals.finalArrOfFreqs = summedSubArrs;
     return next();
@@ -530,15 +515,3 @@ processDataController.calculateAndDisplayBenfordResults = (req, res, next) => {
 module.exports = processDataController;
 
 // --------
-
-// Node.js memory allocation error --> 'JavaScript heap out of memory' - TO REMOVE
-// INSERT INTO package.json?
-// --expose-gc
-//  https://gist.github.com/vsure/339dc0a6bc91976ec090
-
-//  Currently set @ 8192 = 8GB
-// "start": "NODE_ENV=production node --max-old-space-size=2048 src/server/server.js"
-// "dev": "NODE_ENV=development nodemon --max-old-space-size=2048 src/server/server.js & NODE_ENV=development webpack-dev-server --open",
-
-// "start": "NODE_ENV=production node --inspect src/server/server.js",
-// "dev": "NODE_ENV=development nodemon --inspect src/server/server.js & NODE_ENV=development webpack-dev-server --open",
