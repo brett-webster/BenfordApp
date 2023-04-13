@@ -47,7 +47,6 @@ const Navbar = ({ currentPagePath, setChartDisplayBoolean, isProcessing }) => {
           ""
         )}
         {/* CLEAR RESULTS button should only be displayed if on /main page AND boolean value's state = TRUE */}
-        {/* {currentPagePath === "/main" && chartDisplayBoolean ? ( */}
         {currentPagePath === "/main" && !isProcessing ? ( // CHANGED 4/13 to accomodate loading spinner
           <button
             onClick={clearResultsHandler}

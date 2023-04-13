@@ -117,16 +117,6 @@ const MainPage = ({ setChartDisplayBoolean }) => {
     }
   }, [outputObject]); // ADDED 4/9
 
-  // const spinnerContent = (
-  //   <div id="spinner">
-  //     <ProcessingSpinner />
-  //   </div>
-  // );
-  // useEffect(() => {
-  // console.log("isProcessing BOOL: ", isProcessing); // REMOVE
-  // console.log(spinnerContent); // REMOVE
-  // }, [isProcessing]); // ADDED 4/13 for spinner - TESTING ONLY, REMOVE
-
   // ---------------
 
   // Below submitFormHandler & charChangeHandler functions invoked in return portion of component

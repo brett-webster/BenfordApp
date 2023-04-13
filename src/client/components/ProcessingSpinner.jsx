@@ -1,5 +1,6 @@
 import React from "react";
-import ClipLoader from "react-spinners/ClipLoader";
+// import ClipLoader from "react-spinners/ClipLoader";  // Standard spinner
+import PacmanLoader from "react-spinners/PacmanLoader"; // This fits the bill
 
 const ProcessingSpinner = () => {
   return (
@@ -10,7 +11,8 @@ const ProcessingSpinner = () => {
         display: "block",
       }}
     >
-      <ClipLoader color="lightgrey" size={150} />
+      {/* <ClipLoader color="lightgrey" size={150} /> */}
+      <PacmanLoader color="lightgrey" size={50} />
     </div>
   );
 };

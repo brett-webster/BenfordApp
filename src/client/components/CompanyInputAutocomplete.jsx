@@ -138,7 +138,7 @@ function CompanyInputAutocomplete({
     <>
       <input
         type="text"
-        name="company" // const companyName = document.getElementsByName("company");
+        name="company"
         placeholder="* Company name *"
         value={userInput}
         onChange={charChangeHandler}
