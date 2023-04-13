@@ -145,6 +145,7 @@ function CompanyInputAutocomplete({
         onKeyDown={onKeyDown}
         required
         id="companyNameBox"
+        style={{ fontSize: "15px", fontFamily: "Arial, sans-serif" }}
       ></input>
       {suggestionsListComponent}
     </>

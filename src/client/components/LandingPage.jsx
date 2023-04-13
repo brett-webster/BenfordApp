@@ -22,7 +22,14 @@ const LandingPage = () => {
         />
         <br></br>
         <br></br>
-        <div>{benfordDescription}</div>
+        <br></br>
+        <div>
+          <b>{"Summary"}</b>
+          <br></br>
+          <br></br>
+          {benfordDescription}
+        </div>
+        <br></br>
         <br></br>
         <Link to="https://www.sec.gov/about/what-we-do" target="_blank">
           SEC

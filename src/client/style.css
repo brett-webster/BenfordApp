@@ -1,3 +1,8 @@
+body {
+  font-family: "Arial", sans-serif;
+  font-size: 100%;
+}
+
 .navBar {
   background: rgb(175, 216, 251);
   opacity: 0.6;
@@ -35,6 +40,7 @@
 .navBtn {
   background: lightblue;
   border-radius: 9px;
+  font-family: "Arial", sans-serif;
 }
 .navBtn:hover {
   background: royalblue;
@@ -101,20 +107,22 @@
 
 #outputResultsText {
   position: absolute;
-  bottom: 50px;
-  left: 20px;
+  bottom: 100px;
+  left: 75px;
 }
 
 /* -----autocomplete below----- */
 
 #companyNameBox {
+  height: 25px;
   width: 310px;
   text-align: center;
 }
 
 .noSuggestions {
   color: #999;
-  padding: 0.5rem;
+  padding: 1.5rem;
+  font-size: 85%;
 }
 
 .autoCompleteSuggestions {
@@ -122,10 +130,11 @@
   border-top-width: 0;
   list-style: none;
   margin-top: 0;
-  max-height: 143px;
+  max-height: 115px;
   overflow-y: auto;
   padding-left: 0;
   width: calc(300px + 1rem);
+  font-size: 90%;
 }
 
 .autoCompleteSuggestions li {

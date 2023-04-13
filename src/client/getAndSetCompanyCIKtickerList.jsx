@@ -22,15 +22,7 @@ function getAndSetCompanyCIKtickerList(
       });
       const responseObject = response.data;
 
-      // BELOW MERELY TESTS -- TO REMOVE
       console.log("PINGING SERVER for CIK data...");
-      // console.log(
-      //   "CLIENT-SIDE /api/getCompanyCIKtickerList -- TYPE of responseObject INSIDE ASYNC: ",
-      //   typeof responseObject,
-      //   JSON.parse(responseObject)["3M CO"],
-      //   JSON.parse(responseObject)["APPLE INC."],
-      //   JSON.parse(responseObject)
-      // );
 
       // Store data in state and localStorage.  NOTE:  Chrome browser has 5MB localStorage limit (.json file < 500KB)
       setCompanyCIKtickerListObj(JSON.parse(responseObject));

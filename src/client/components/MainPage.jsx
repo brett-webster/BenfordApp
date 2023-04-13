@@ -8,6 +8,7 @@ import { chartDisplayContext } from "../App.jsx"; // ADDED for useContext hook
 import getAndSetCompanyCIKtickerList from "../getAndSetCompanyCIKtickerList.jsx";
 import CompanyInputAutocomplete from "./CompanyInputAutocomplete.jsx";
 import BenfordResultsText from "./BenfordResultsText.jsx";
+import ProcessingSpinner from "./ProcessingSpinner.jsx";
 
 const MainPage = ({ setChartDisplayBoolean }) => {
   // State variables
@@ -37,6 +38,7 @@ const MainPage = ({ setChartDisplayBoolean }) => {
   const [autocompleteState, setAutocompleteState] = useState(
     initialAutocompleteState
   );
+  const [isProcessing, setIsProcessing] = useState(false); // ADDED 4/13 for spinner
 
   // ADDED for useContext hook, pulling it in to access here
   const chartDisplayBoolean = useContext(chartDisplayContext);
@@ -115,6 +117,16 @@ const MainPage = ({ setChartDisplayBoolean }) => {
     }
   }, [outputObject]); // ADDED 4/9
 
+  // const spinnerContent = (
+  //   <div id="spinner">
+  //     <ProcessingSpinner />
+  //   </div>
+  // );
+  // useEffect(() => {
+  // console.log("isProcessing BOOL: ", isProcessing); // REMOVE
+  // console.log(spinnerContent); // REMOVE
+  // }, [isProcessing]); // ADDED 4/13 for spinner - TESTING ONLY, REMOVE
+
   // ---------------
 
   // Below submitFormHandler & charChangeHandler functions invoked in return portion of component
@@ -135,11 +147,12 @@ const MainPage = ({ setChartDisplayBoolean }) => {
       // ABOVE COVERS VALID CIK BUT THAT LACKS FILINGS AND ALSO VALID CIK W/ FILINGS BUT NO NUMBERS THEREIN; LASTLY, COVERS BAD CIK (BUT THIS IS NOT RELEVANT SINCE PRE-FILTERED)
       // IN ABOVE CASE, DO NOT OUTPUT CHART, ONLY OUTPUT EMPTY RESULTS
       // Send input data to server for processing & response...
+      setIsProcessing(true); // ADDED 4/13 for spinner -- Turn ON spinner
       (async () => {
         const response = await axios.post("/api/inputAndReturnData", {
           inputObject,
         });
-        // ** ADJUST THE BELOW ** Error handle empty array from server
+        setIsProcessing(false); // ADDED 4/13 for spinner -- Turn OFF spinner)
         if (response.data.outputDataIsEmptyBoolean) {
           setOutputArrayEmptyBoolean(true); // Used as flag for message that outputArr contains no digits
         } else {
@@ -184,6 +197,7 @@ const MainPage = ({ setChartDisplayBoolean }) => {
       <Navbar
         currentPagePath={currentPagePath}
         setChartDisplayBoolean={setChartDisplayBoolean}
+        isProcessing={isProcessing} // ADDED 4/13 to accomodate loading spinner
       />
       <div id="companyAndDateFormSubmitContainer">
         <img
@@ -222,7 +236,11 @@ const MainPage = ({ setChartDisplayBoolean }) => {
           <Link
             to="https://www.sec.gov/edgar/searchedgar/companysearch"
             target="_blank"
-            style={{ fontSize: "12px", fontFamily: "arial" }}
+            style={{
+              fontSize: "12px",
+              fontFamily: "Arial, sans-serif",
+              marginTop: "5px",
+            }}
           >
             Company/CIK lookup
           </Link>
@@ -234,6 +252,7 @@ const MainPage = ({ setChartDisplayBoolean }) => {
             onChange={charChangeHandler}
             min="2010-01-01"
             max={new Date().toJSON().slice(0, 10)} // Today's date
+            style={{ fontSize: "13px", fontFamily: "Arial, sans-serif" }}
             required
           ></input>
           <input
@@ -243,6 +262,7 @@ const MainPage = ({ setChartDisplayBoolean }) => {
             onChange={charChangeHandler}
             min="2010-01-01"
             max={new Date().toJSON().slice(0, 10)} // Today's date
+            style={{ fontSize: "13px", fontFamily: "Arial, sans-serif" }}
             required
           ></input>
           <br></br>
@@ -263,6 +283,8 @@ const MainPage = ({ setChartDisplayBoolean }) => {
             : ""}
         </div>
       </div>
+      {/* LOADING SPINNER ADDED FOR DATA PROCESSING -- DISCONTINUE WHEN RESULTS ARE READY & CHART IS PRESENTED */}
+      <div>{isProcessing ? <ProcessingSpinner /> : null}</div>
       {/* Do not render chart if SUBMIT button has not yet been pressed OR CLEAR RESULTS button has not been clicked post-charting */}
       <div>
         {chartDisplayBoolean && outputObject.arrForChart

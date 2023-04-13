@@ -4,7 +4,7 @@ import "../style.css";
 import benfordAppLogo from "../BenfordAppLogo.png";
 import { chartDisplayContext } from "../App.jsx"; // ADDED for useContext hook
 
-const Navbar = ({ currentPagePath, setChartDisplayBoolean }) => {
+const Navbar = ({ currentPagePath, setChartDisplayBoolean, isProcessing }) => {
   const chartDisplayBoolean = useContext(chartDisplayContext); // ADDED for useContext hook, pulling it in to access here
 
   // Need useEffect here to read the updated value of changed variable's state following a re-render (in this case tracking the re-setting of the state of chartDisplayBoolean, then displaying/clearing charting)
@@ -47,7 +47,8 @@ const Navbar = ({ currentPagePath, setChartDisplayBoolean }) => {
           ""
         )}
         {/* CLEAR RESULTS button should only be displayed if on /main page AND boolean value's state = TRUE */}
-        {currentPagePath === "/main" && chartDisplayBoolean ? (
+        {/* {currentPagePath === "/main" && chartDisplayBoolean ? ( */}
+        {currentPagePath === "/main" && !isProcessing ? ( // CHANGED 4/13 to accomodate loading spinner
           <button
             onClick={clearResultsHandler}
             id="clearResultsBtn"

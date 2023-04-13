@@ -72,7 +72,7 @@ const LogIn = () => {
           </button>
         </form>
         <br></br> <br></br>
-        <Link to="https://www.google.com/">
+        <Link to="">
           <button className="nonNavBtn">SIGN IN WITH GOOGLE OAUTH</button>
         </Link>
         <br></br>
