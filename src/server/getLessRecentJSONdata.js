@@ -2,7 +2,12 @@
 
 // getLessRecentJSONdata grabs additional URLs from JSON API, part 2 of process.  Iterates through array of extracted JSON links going back MORE THAN 1,000 filings
 // Add valid historic URLs onto aggregate array of URLs for subsequent financial data parsing
-function getLessRecentJSONdata(embeddedJSONObject, fullCIK) {
+function getLessRecentJSONdata(
+  embeddedJSONObject,
+  fullCIK,
+  startDateforExpandedRange,
+  endDateforExpandedRange
+) {
   // Noting here that the below JSON structure DIFFERS from the (part 1 structure above) containing ONLY 1st 1,000 entries
   const formArr = embeddedJSONObject.form;
   const reportDateArr = embeddedJSONObject.reportDate;
@@ -17,8 +22,8 @@ function getLessRecentJSONdata(embeddedJSONObject, fullCIK) {
         formArr[i] === "10-Q" ||
         formArr[i] === "20-F" || // NOTE:  These last 2 are for foreign issuers
         formArr[i] === "40-F") &&
-      reportDateArr[i] >= startDateforRange &&
-      reportDateArr[i] <= endDateforRange
+      reportDateArr[i] >= startDateforExpandedRange &&
+      reportDateArr[i] <= endDateforExpandedRange
     ) {
       assembledURLhtm =
         "https://www.sec.gov/Archives/edgar/data/" +
@@ -27,6 +32,12 @@ function getLessRecentJSONdata(embeddedJSONObject, fullCIK) {
         accessionNumberArr[i].replace(/-/g, "") +
         "/" +
         primaryDocumentArr[i];
+      // console.log("reportDateArr[i]:  ", reportDateArr[i]); // REMOVE
+      // console.log(
+      //   "assembledURLhtm ( -- from appendix, inside getLessRecentJSONdata helper fxn):  ",
+      //   assembledURLhtm
+      // ); // REMOVE
+
       subArrOfassembledURLs.push(assembledURLhtm);
     }
   }

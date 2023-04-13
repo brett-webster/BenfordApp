@@ -3,6 +3,7 @@ const app = express();
 const path = require("path");
 const fs = require("fs");
 const processDataController = require("./processDataController.js");
+const getLessRecentJSONdata = require("./getLessRecentJSONdata.js"); // ADDED 4/12 to pass into parameterized middleware fxn processDataController.createLessRecentURLsAndGrabJSON
 
 app.use(express.json());
 
@@ -28,7 +29,7 @@ app.post(
   "/api/inputAndReturnData",
   processDataController.importValidFinancialLineItemsObject,
   processDataController.getMostRecentJSONdataAndReturn,
-  processDataController.createLessRecentURLsAndGrabJSON,
+  processDataController.createLessRecentURLsAndGrabJSON(getLessRecentJSONdata), // <--- Parameterizing middleware fxn to accomodate helper fxn
   processDataController.fetchAllURLsInTxtFormat,
   processDataController.iterateThruDOMsOfFinalURLarrAndParse,
   processDataController.compressOutputArrs,

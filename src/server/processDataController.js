@@ -2,7 +2,6 @@ const fs = require("fs");
 const path = require("path");
 const fetch = require("node-fetch");
 const { JSDOM } = require("jsdom");
-const { getLessRecentJSONdata } = require("./getLessRecentJSONdata.js");
 
 // Node.js equivalent of localStorage on client-side (attached to window)
 const LocalStorage = require("node-localstorage").LocalStorage;
@@ -118,6 +117,7 @@ processDataController.getMostRecentJSONdataAndReturn = async (
         reportDateArr[i] >= startDate &&
         reportDateArr[i] <= endDate
       ) {
+        // console.log("reportDateArr[i]:  ", reportDateArr[i]); // REMOVE
         const assembledURLhtm =
           "https://www.sec.gov/Archives/edgar/data/" +
           cik +
@@ -148,86 +148,103 @@ processDataController.getMostRecentJSONdataAndReturn = async (
 // Use node-fetch API again to grab "appendix" objects w/in the company's same full SEC EDGAR JSON object containing LESS recent financial data, within the prescribed data range
 // Extract/save all additional financial statement URLs - part 2 of fin statement URL array assembly
 // Uses helper function getLessRecentJSONdata.js (not part of middleware chain) during looping
-processDataController.createLessRecentURLsAndGrabJSON = async (
-  req,
-  res,
-  next
+processDataController.createLessRecentURLsAndGrabJSON = (
+  getLessRecentJSONdata // <--- Parameterizing middleware fxn to accomodate helper fxn getLessRecentJSONdata
 ) => {
-  try {
-    let { mainJSONObj, arrOfassembledURLs, fullCIK } = res.locals;
-    const { startDate, endDate } = req.body.inputObject;
+  return async (req, res, next) => {
+    try {
+      let { mainJSONObj, arrOfassembledURLs, fullCIK } = res.locals;
+      const { startDate, endDate } = req.body.inputObject;
 
-    // Adjust data range to grab slightly more data than is required & squarely matches SEC submission data (i.e. 2 additional submission files where user-inputted start and end dates fall within the submission range) -- dates outside user-input range will be subsequently filtered out
-    let startDateforExpandedRange = startDate; // Set defaults in case way out of range
-    let endDateforExpandedRange = endDate;
-    for (let i = 0; i < mainJSONObj.filings.files.length; i++) {
-      if (
-        startDate >= mainJSONObj.filings.files[i].filingFrom &&
-        startDate <= mainJSONObj.filings.files[i].filingTo
-      ) {
-        startDateforExpandedRange = mainJSONObj.filings.files[i].filingFrom;
+      // Adjust data range to grab slightly more data than is required & squarely matches SEC submission data (i.e. 2 additional submission files where user-inputted start and end dates fall within the submission range) -- dates outside user-input range will be subsequently filtered out
+      let startDateforExpandedRange = startDate; // Set defaults in case way out of range
+      let endDateforExpandedRange = endDate;
+      for (let i = 0; i < mainJSONObj.filings.files.length; i++) {
+        if (
+          startDate >= mainJSONObj.filings.files[i].filingFrom &&
+          startDate <= mainJSONObj.filings.files[i].filingTo
+        ) {
+          startDateforExpandedRange = mainJSONObj.filings.files[i].filingFrom;
+        }
+        if (
+          endDate >= mainJSONObj.filings.files[i].filingFrom &&
+          endDate <= mainJSONObj.filings.files[i].filingTo
+        ) {
+          endDateforExpandedRange = mainJSONObj.filings.files[i].filingTo;
+        }
       }
-      if (
-        endDate >= mainJSONObj.filings.files[i].filingFrom &&
-        endDate <= mainJSONObj.filings.files[i].filingTo
-      ) {
-        endDateforExpandedRange = mainJSONObj.filings.files[i].filingTo;
+
+      // Extract JSON links going back MORE THAN 1,000 entries into a separate array, iterate through this array to add additional, valid historic URLs onto aggregate array
+      const promisesArr = [];
+      for (let i = 0; i < mainJSONObj.filings.files.length; i++) {
+        // Conditional ensures filing range falls WITHIN user-input range so as NOT to download unneeded data
+        if (
+          mainJSONObj.filings.files[i].filingFrom >=
+            startDateforExpandedRange &&
+          mainJSONObj.filings.files[i].filingTo <= endDateforExpandedRange
+        ) {
+          const assembledURLJSON =
+            "https://data.sec.gov/submissions/" +
+            mainJSONObj.filings.files[i].name;
+
+          const fetchRequest = await fetch(assembledURLJSON, {
+            method: "GET",
+            headers: {
+              "User-Agent": "Brett Webster websterbrett@gmail.com",
+              "Accept-Encoding": "gzip, deflate",
+            },
+          });
+          const fetchRequestText = await fetchRequest.text();
+          promisesArr.push(fetchRequestText);
+
+          console.log(
+            assembledURLJSON,
+            "assembledURLJSON.....all 'appendix' links"
+          );
+        }
       }
-    }
 
-    // Extract JSON links going back MORE THAN 1,000 entries into a separate array, iterate through this array to add additional, valid historic URLs onto aggregate array
-    const promisesArr = [];
-    for (let i = 0; i < mainJSONObj.filings.files.length; i++) {
-      // Conditional ensures filing range falls WITHIN user-input range so as NOT to download unneeded data
-      if (
-        mainJSONObj.filings.files[i].filingFrom >= startDateforExpandedRange &&
-        mainJSONObj.filings.files[i].filingTo <= endDateforExpandedRange
-      ) {
-        const assembledURLJSON =
-          "https://data.sec.gov/submissions/" +
-          mainJSONObj.filings.files[i].name;
+      // Use Promise.all for multiple fetch requests in parallel to capture entirety of data output once processing of all parts is complete
+      const JSONinTxtFormatArr = await Promise.all(promisesArr); // CHANGED FROM additionalJSONsinTxtFormat to JSONinTxtFormatArr, converted from .then() promise-chaining
 
-        const fetchRequest = await fetch(assembledURLJSON, {
-          method: "GET",
-          headers: {
-            "User-Agent": "Brett Webster websterbrett@gmail.com",
-            "Accept-Encoding": "gzip, deflate",
-          },
-        });
-        const fetchRequestText = await fetchRequest.text();
-        promisesArr.push(fetchRequestText);
+      // console.log("TEST1: ", getLessRecentJSONdata);  // REMOVE
+      // console.log("JSONinTxtFormatArr.length:  ", JSONinTxtFormatArr.length); // REMOVE
+      // console.log("arrOfassembledURLs (pre-loop): ", arrOfassembledURLs); // REMOVE
 
-        console.log(
-          assembledURLJSON.length,
-          assembledURLJSON,
-          "FULLassembledURLJSON....."
-        );
+      // Convert downloaded JSON text back into object using .parse() method
+      for (let i = 0; i < JSONinTxtFormatArr.length; i++) {
+        embeddedJSONObject = JSON.parse(JSONinTxtFormatArr[i]);
+        //   console.log("TEST2: ", getLessRecentJSONdata); // REMOVE
+        const subArrOfassembledURLsToAdd = getLessRecentJSONdata(
+          embeddedJSONObject,
+          fullCIK,
+          startDateforExpandedRange,
+          endDateforExpandedRange
+        ); // Helper function, imported & invoked to assemble non-recent URLs of financial statements into a subArray to be added to main array
+        //   console.log(
+        //     "subArrOfassembledURLsToAdd, -- from appendix, BEFORE .concat():  ",
+        //     subArrOfassembledURLsToAdd
+        //   );  // REMOVE
+        arrOfassembledURLs = arrOfassembledURLs.concat(
+          subArrOfassembledURLsToAdd
+        ); // FIXED
+        //   console.log(
+        //     "arrOfassembledURLs, -- from appendix, POST .concat():  ",
+        //     arrOfassembledURLs
+        //   ); // REMOVE
       }
+
+      res.locals.arrOfassembledURLs = arrOfassembledURLs; // Assign to res.locals, updating .arrOfassembledURLs property
+      return next();
+    } catch (err) {
+      return next({
+        log: "processDataController.createLessRecentURLsAndGrabJSON:  Middleware error in fetching/saving 'appendix' objects containing non-recent financial statement URLs",
+        message: {
+          err: `processDataController.createLessRecentURLsAndGrabJSON: ${err}`,
+        },
+      });
     }
-
-    // Use Promise.all for multiple fetch requests in parallel to capture entirety of data output once processing of all parts is complete
-    const JSONinTxtFormatArr = await Promise.all(promisesArr); // CHANGED FROM additionalJSONsinTxtFormat to JSONinTxtFormatArr, converted from .then() promise-chaining
-
-    // Convert downloaded JSON text back into object using .parse() method
-    for (let i = 0; i < JSONinTxtFormatArr.length; i++) {
-      embeddedJSONObject = JSON.parse(JSONinTxtFormatArr[i]);
-      const subArrOfassembledURLsToAdd = getLessRecentJSONdata(
-        embeddedJSONObject,
-        fullCIK
-      ); // Helper function, imported & invoked to assemble non-recent URLs of financial statements into a subArray to be added to main array
-      arrOfassembledURLs.concat(subArrOfassembledURLsToAdd);
-    }
-
-    res.locals.arrOfassembledURLs = arrOfassembledURLs; // Assign to res.locals, updating .arrOfassembledURLs property
-    return next();
-  } catch (err) {
-    return next({
-      log: "processDataController.createLessRecentURLsAndGrabJSON:  Middleware error in fetching/saving 'appendix' objects containing non-recent financial statement URLs",
-      message: {
-        err: `processDataController.createLessRecentURLsAndGrabJSON: ${err}`,
-      },
-    });
-  }
+  };
 };
 
 // --------
@@ -237,6 +254,7 @@ processDataController.createLessRecentURLsAndGrabJSON = async (
 processDataController.fetchAllURLsInTxtFormat = async (req, res, next) => {
   try {
     const { arrOfassembledURLs } = res.locals;
+    console.log("FINAL arrOfassembledURLs:  ", arrOfassembledURLs); // REMOVE
 
     // Construct another fetchRequest array containing assembled URLs and again use Promise.all for multiple fetch requests in parallel to capture entirety of data output
     promisesArr = [];
@@ -274,88 +292,118 @@ processDataController.iterateThruDOMsOfFinalURLarrAndParse = async (
   res,
   next
 ) => {
-  //   try {
-  const { URLinTxtFormatArr, lineItemsObject } = res.locals;
+  try {
+    const { URLinTxtFormatArr, lineItemsObject } = res.locals;
 
-  const validFinancialLineItemsObject = lineItemsObject;
-  let validFinancialLineItemsArr = Object.values(validFinancialLineItemsObject);
-  const combinedFinalArrOfFinancialNums = [];
-
-  // Iterate through entirety of URLinTxtFormatArr array, creating a new DOM for each URL, parsing each
-  for (let i = 0; i < URLinTxtFormatArr.length; i++) {
-    // Initialize DOM & pull relevant parts of webpage structure based on below tree structure
-    const dom = new JSDOM(URLinTxtFormatArr[i]);
-
-    const lineItemNameAndNumObject = {};
-    for (let j = 0; j < validFinancialLineItemsArr.length; j++) {
-      //Create DOM of each valid financial line item (used to search SEC EDGAR URL filing previously pulled down)
-      const namedTextElements = dom.window.document.getElementsByName(
-        validFinancialLineItemsArr[j]
-      );
-
-      // Filter for financial line items (1) actually present within company's filing URL and (2) included in the master list (validFinancialLineItemsObject)
-      if (
-        namedTextElements.length > 0 &&
-        validFinancialLineItemsArr[j] in validFinancialLineItemsObject
-      ) {
-        const financialLineItemName = namedTextElements[0].getAttribute("name");
-
-        // Filter out irrelevant items, adding relevant items to a new object lineItemNameAndNumObject with key/value pair as follows: (1) concatenated financial line item name attribute + its corresponding value is KEY (2) and the corresponding values as VALUE (in string format)
-        // This key structure auto-dedupes as no duplicate keys are permitted in JS objects (a VERY unlikely edge case is where a numeric is repeated across time for the SAME financial line item names)
-        for (let k = 0; k < namedTextElements.length; k++) {
-          const key =
-            namedTextElements[0].getAttribute("name") +
-            namedTextElements[k].innerHTML;
-          const value = namedTextElements[k].innerHTML;
-          lineItemNameAndNumObject[key] = value;
-        } // end inner for loop
-      }
-
-      // Tracking heap's dynamic memory allocation to test & avoid 'fatal error' --> "FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory"
-      const used = process.memoryUsage();
-      for (let key in used) {
-        //   console.log(
-        //     `${key} ${Math.round(used[key] / 1024 / 1024 / 1024)} GB`
-        //   );
-        console.log(
-          `${key} ${Math.round((used[key] / 1024 / 1024) * 100) / 100} MB`
-        );
-      }
-    } // end outer for loop
-    dom.window.close(); // ADDED 4/11
-
-    // //Iterate through array containing valid financial line items from master list .txt file (validFinancialLineItemsObject), extracting into final array those contained in the lineItemNameAndNumObject just extracted from the newly created DOMs
-    const finalArrOfLineItems = [];
-    const finalArrOfFinancialNums = [];
-    let counter = 0;
-    // Only add pairs possessing an acceptable key format
-    for (let [key, value] of Object.entries(lineItemNameAndNumObject)) {
-      if (key[key.length - 1] !== ">") {
-        counter++;
-        // console.log(key, value, counter);
-        finalArrOfLineItems.push(key);
-        finalArrOfFinancialNums.push(value);
-      }
-    }
-    console.log(
-      finalArrOfFinancialNums.length,
-      finalArrOfFinancialNums,
-      "finalArrOfFinancialNums..."
+    const validFinancialLineItemsObject = lineItemsObject;
+    let validFinancialLineItemsArr = Object.values(
+      validFinancialLineItemsObject
     );
-    combinedFinalArrOfFinancialNums.push(finalArrOfFinancialNums);
-  } // end outermost for loop
+    const combinedFinalArrOfFinancialNums = [];
 
-  res.locals.combinedFinalArrOfFinancialNums = combinedFinalArrOfFinancialNums; // Assign to res.locals -- this is the combined array of raw results subarrays containing financial numerics to be processed and aggregated into single cumulative results array [10 elements] in next middleware
-  return next();
-  //   }
-  //   catch (err) {
-  //     return next({
-  //       log: "processDataController.iterateThruDOMsOfFinalURLarrAndParse:  Middleware error occurred in creating & parsing DOM of individual financial statement URL to tally leading digit counts for select financial line items",
-  //       message: {
-  //         err: `processDataController.iterateThruDOMsOfFinalURLarrAndParse: ${err}`,
-  //       },
-  //     });
-  //   }
+    // Iterate through entirety of URLinTxtFormatArr array, creating a new DOM for each URL, parsing each
+    for (let i = 0; i < URLinTxtFormatArr.length; i++) {
+      // Initialize DOM & pull relevant parts of webpage structure based on below tree structure
+      const dom = new JSDOM(URLinTxtFormatArr[i]);
+
+      const lineItemNameAndNumObject = {};
+      let HTMLelemsTaggedInCurrentURL = false; // ADDED 4/12
+      for (let j = 0; j < validFinancialLineItemsArr.length; j++) {
+        //Create DOM of each valid financial line item (used to search SEC EDGAR URL filing previously pulled down)
+        const namedTextElements = dom.window.document.getElementsByName(
+          validFinancialLineItemsArr[j]
+        );
+
+        // Filter for financial line items (1) actually present within company's filing URL and (2) included in the master list (validFinancialLineItemsObject)
+        if (
+          namedTextElements.length > 0 &&
+          validFinancialLineItemsArr[j] in validFinancialLineItemsObject
+        ) {
+          HTMLelemsTaggedInCurrentURL = true; // ADDED 4/12
+          const financialLineItemName =
+            namedTextElements[0].getAttribute("name");
+
+          // Filter out irrelevant items, adding relevant items to a new object lineItemNameAndNumObject with key/value pair as follows: (1) concatenated financial line item name attribute + its corresponding value is KEY (2) and the corresponding values as VALUE (in string format)
+          // This key structure auto-dedupes as no duplicate keys are permitted in JS objects (a VERY unlikely edge case is where a numeric is repeated across time for the SAME financial line item names)
+          for (let k = 0; k < namedTextElements.length; k++) {
+            const key =
+              namedTextElements[0].getAttribute("name") +
+              namedTextElements[k].innerHTML;
+            const value = namedTextElements[k].innerHTML;
+            lineItemNameAndNumObject[key] = value;
+          } // end inner for loop
+        }
+
+        if (!HTMLelemsTaggedInCurrentURL) {
+          // const lineItemUntagged = validFinancialLineItemsArr[j].replace(
+          //   "us-gaap:",
+          //   ""
+          // );
+          // WOULD ADD LOGIC HERE FROM BELOW TO GRAB element in position j from lineItemsObjectUntagged (or simply remove us-gaap:)...
+          //... and try to gather 2 numerical items, adding these in same format as above
+        } // REMOVE
+
+        // Tracking heap's dynamic memory allocation to test & avoid 'fatal error' --> "FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory"
+        // const used = process.memoryUsage();
+        // for (let key in used) {
+        //   //   console.log(
+        //   //     `${key} ${Math.round(used[key] / 1024 / 1024 / 1024)} GB`
+        //   //   );
+        //   console.log(
+        //     `${key} ${Math.round((used[key] / 1024 / 1024) * 100) / 100} MB`
+        //   );
+        // }
+      } // end outer for loop
+      // BELOW IS FOR TESTING - TO REMOVE - ATTEMPT TO PARSE DOM IN OLDER FINANCIAL STATEMENT URLS w/o HTML TAGS - IMPRACTICAL DUE TO NON-UNIFORMITY -- i.e. DIFFERENT COMPANIES USE DIFFERENT HTML DOM STRUCTURES,
+      // FINANCIAL STATEMENT URL HTML MUST INCLUDE "<ix:header>" IF IT IS HTML-TAGGED...
+      // const targetedUntaggedDOMelements =
+      //   dom.window.document.querySelectorAll("td > p > font"); // 3M 03-31-2019 <-- https://www.sec.gov/Archives/edgar/data/66740/000155837019003408/mmm-20190331x10q.htm#ConsolidatedStatementofIncome_113313
+      // dom.window.document.querySelectorAll("td > div > font"); // V 03-31-2019 <-- https://www.sec.gov/Archives/edgar/data/1403161/000140316119000017/v33119form10q.htm#s7E33478749C6528B848AA6EB61380544
+      // for (let i = 0; i < targetedUntaggedDOMelements.length; i++) {
+      //   console.log(
+      //     targetedUntaggedDOMelements[i].innerHTML,
+      //     "Untagged DOM innerHTML..."
+      //   );
+      // }
+      // console.log(
+      //   "targetedUntaggedDOMelements.length: ",
+      //   targetedUntaggedDOMelements.length
+      // );  // REMOVE
+
+      dom.window.close();
+
+      // //Iterate through array containing valid financial line items from master list .txt file (validFinancialLineItemsObject), extracting into final array those contained in the lineItemNameAndNumObject just extracted from the newly created DOMs
+      const finalArrOfLineItems = [];
+      const finalArrOfFinancialNums = [];
+      let counter = 0;
+      // Only add pairs possessing an acceptable key format
+      for (let [key, value] of Object.entries(lineItemNameAndNumObject)) {
+        if (key[key.length - 1] !== ">") {
+          counter++;
+          // console.log(key, value, counter);
+          finalArrOfLineItems.push(key);
+          finalArrOfFinancialNums.push(value);
+        }
+      }
+      console.log(
+        finalArrOfFinancialNums.length,
+        finalArrOfFinancialNums,
+        "finalArrOfFinancialNums..."
+      );
+      combinedFinalArrOfFinancialNums.push(finalArrOfFinancialNums);
+    } // end outermost for loop
+
+    res.locals.combinedFinalArrOfFinancialNums =
+      combinedFinalArrOfFinancialNums; // Assign to res.locals -- this is the combined array of raw results subarrays containing financial numerics to be processed and aggregated into single cumulative results array [10 elements] in next middleware
+    return next();
+  } catch (err) {
+    return next({
+      log: "processDataController.iterateThruDOMsOfFinalURLarrAndParse:  Middleware error occurred in creating & parsing DOM of individual financial statement URL to tally leading digit counts for select financial line items",
+      message: {
+        err: `processDataController.iterateThruDOMsOfFinalURLarrAndParse: ${err}`,
+      },
+    });
+  }
 };
 
 // --------
