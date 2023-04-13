@@ -5,3 +5,4 @@ build/*.js
 dist/
 package-lock.json
 .env
+db.json

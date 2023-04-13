@@ -117,7 +117,6 @@ processDataController.getMostRecentJSONdataAndReturn = async (
         reportDateArr[i] >= startDate &&
         reportDateArr[i] <= endDate
       ) {
-        // console.log("reportDateArr[i]:  ", reportDateArr[i]); // REMOVE
         const assembledURLhtm =
           "https://www.sec.gov/Archives/edgar/data/" +
           cik +
@@ -207,31 +206,20 @@ processDataController.createLessRecentURLsAndGrabJSON = (
       // Use Promise.all for multiple fetch requests in parallel to capture entirety of data output once processing of all parts is complete
       const JSONinTxtFormatArr = await Promise.all(promisesArr); // CHANGED FROM additionalJSONsinTxtFormat to JSONinTxtFormatArr, converted from .then() promise-chaining
 
-      // console.log("TEST1: ", getLessRecentJSONdata);  // REMOVE
-      // console.log("JSONinTxtFormatArr.length:  ", JSONinTxtFormatArr.length); // REMOVE
-      // console.log("arrOfassembledURLs (pre-loop): ", arrOfassembledURLs); // REMOVE
-
       // Convert downloaded JSON text back into object using .parse() method
       for (let i = 0; i < JSONinTxtFormatArr.length; i++) {
         embeddedJSONObject = JSON.parse(JSONinTxtFormatArr[i]);
-        //   console.log("TEST2: ", getLessRecentJSONdata); // REMOVE
+
         const subArrOfassembledURLsToAdd = getLessRecentJSONdata(
           embeddedJSONObject,
           fullCIK,
           startDateforExpandedRange,
           endDateforExpandedRange
         ); // Helper function, imported & invoked to assemble non-recent URLs of financial statements into a subArray to be added to main array
-        //   console.log(
-        //     "subArrOfassembledURLsToAdd, -- from appendix, BEFORE .concat():  ",
-        //     subArrOfassembledURLsToAdd
-        //   );  // REMOVE
+
         arrOfassembledURLs = arrOfassembledURLs.concat(
           subArrOfassembledURLsToAdd
         ); // FIXED
-        //   console.log(
-        //     "arrOfassembledURLs, -- from appendix, POST .concat():  ",
-        //     arrOfassembledURLs
-        //   ); // REMOVE
       }
 
       res.locals.arrOfassembledURLs = arrOfassembledURLs; // Assign to res.locals, updating .arrOfassembledURLs property
@@ -307,7 +295,7 @@ processDataController.iterateThruDOMsOfFinalURLarrAndParse = async (
       const dom = new JSDOM(URLinTxtFormatArr[i]);
 
       const lineItemNameAndNumObject = {};
-      let HTMLelemsTaggedInCurrentURL = false; // ADDED 4/12
+      let HTMLelemsTaggedInCurrentURL = false; // Unused --> manual parsing flag
       for (let j = 0; j < validFinancialLineItemsArr.length; j++) {
         //Create DOM of each valid financial line item (used to search SEC EDGAR URL filing previously pulled down)
         const namedTextElements = dom.window.document.getElementsByName(
@@ -319,7 +307,7 @@ processDataController.iterateThruDOMsOfFinalURLarrAndParse = async (
           namedTextElements.length > 0 &&
           validFinancialLineItemsArr[j] in validFinancialLineItemsObject
         ) {
-          HTMLelemsTaggedInCurrentURL = true; // ADDED 4/12
+          HTMLelemsTaggedInCurrentURL = true; // Unused --> manual parsing flag
           const financialLineItemName =
             namedTextElements[0].getAttribute("name");
 
@@ -334,15 +322,6 @@ processDataController.iterateThruDOMsOfFinalURLarrAndParse = async (
           } // end inner for loop
         }
 
-        if (!HTMLelemsTaggedInCurrentURL) {
-          // const lineItemUntagged = validFinancialLineItemsArr[j].replace(
-          //   "us-gaap:",
-          //   ""
-          // );
-          // WOULD ADD LOGIC HERE FROM BELOW TO GRAB element in position j from lineItemsObjectUntagged (or simply remove us-gaap:)...
-          //... and try to gather 2 numerical items, adding these in same format as above
-        } // REMOVE
-
         // Tracking heap's dynamic memory allocation to test & avoid 'fatal error' --> "FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory"
         // const used = process.memoryUsage();
         // for (let key in used) {
@@ -354,22 +333,6 @@ processDataController.iterateThruDOMsOfFinalURLarrAndParse = async (
         //   );
         // }
       } // end outer for loop
-      // BELOW IS FOR TESTING - TO REMOVE - ATTEMPT TO PARSE DOM IN OLDER FINANCIAL STATEMENT URLS w/o HTML TAGS - IMPRACTICAL DUE TO NON-UNIFORMITY -- i.e. DIFFERENT COMPANIES USE DIFFERENT HTML DOM STRUCTURES,
-      // FINANCIAL STATEMENT URL HTML MUST INCLUDE "<ix:header>" IF IT IS HTML-TAGGED...
-      // const targetedUntaggedDOMelements =
-      //   dom.window.document.querySelectorAll("td > p > font"); // 3M 03-31-2019 <-- https://www.sec.gov/Archives/edgar/data/66740/000155837019003408/mmm-20190331x10q.htm#ConsolidatedStatementofIncome_113313
-      // dom.window.document.querySelectorAll("td > div > font"); // V 03-31-2019 <-- https://www.sec.gov/Archives/edgar/data/1403161/000140316119000017/v33119form10q.htm#s7E33478749C6528B848AA6EB61380544
-      // for (let i = 0; i < targetedUntaggedDOMelements.length; i++) {
-      //   console.log(
-      //     targetedUntaggedDOMelements[i].innerHTML,
-      //     "Untagged DOM innerHTML..."
-      //   );
-      // }
-      // console.log(
-      //   "targetedUntaggedDOMelements.length: ",
-      //   targetedUntaggedDOMelements.length
-      // );  // REMOVE
-
       dom.window.close();
 
       // //Iterate through array containing valid financial line items from master list .txt file (validFinancialLineItemsObject), extracting into final array those contained in the lineItemNameAndNumObject just extracted from the newly created DOMs
@@ -380,7 +343,6 @@ processDataController.iterateThruDOMsOfFinalURLarrAndParse = async (
       for (let [key, value] of Object.entries(lineItemNameAndNumObject)) {
         if (key[key.length - 1] !== ">") {
           counter++;
-          // console.log(key, value, counter);
           finalArrOfLineItems.push(key);
           finalArrOfFinancialNums.push(value);
         }
@@ -436,7 +398,6 @@ processDataController.compressOutputArrs = (req, res, next) => {
         if (!Number.isInteger(elem)) arr[index] = 0;
       });
     } else console.log("No output data");
-    // console.log(outerArr);
 
     const summedSubArrs = outerArr.reduce((cumulativeSubArr, currentSubArr) => {
       const newArr = cumulativeSubArr.map((elem, index) => {
@@ -446,7 +407,6 @@ processDataController.compressOutputArrs = (req, res, next) => {
       }); // end map method
       return newArr;
     }, zeroArr);
-    console.log(summedSubArrs);
 
     // An array of 10 integers should always be sent back -- return "empty feedback" in case where all digits = 0 (no NaNs or errors should exist) <-- noOutputDataBoolean = true.  Attach this to outputObject & send back to client.  If true, signal to NOT render any charting but instead a message
     for (let i = 0; i < 10; i++) {
@@ -502,7 +462,6 @@ processDataController.calculateAndDisplayBenfordResults = (req, res, next) => {
     // Compute Kolmogorov-Smirnoff (K-S) statistics
     const criticalValue5Percent = 1.36 / Math.sqrt(sumOfLeadingDigitsCount);
     const criticalValue1Percent = 1.63 / Math.sqrt(sumOfLeadingDigitsCount);
-    // console.log(criticalValue5Percent, criticalValue1Percent);
 
     // Compute absolute differences in % terms for each digit's frequency comparing observed vs theoretical Benford curve, find absolute maximum and compare against critical values of 5% and 1% to assess Benford conformity
     let observedMinusBenfordPercentagesAbsDiffsArr = [];

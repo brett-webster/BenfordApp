@@ -32,11 +32,6 @@ function getLessRecentJSONdata(
         accessionNumberArr[i].replace(/-/g, "") +
         "/" +
         primaryDocumentArr[i];
-      // console.log("reportDateArr[i]:  ", reportDateArr[i]); // REMOVE
-      // console.log(
-      //   "assembledURLhtm ( -- from appendix, inside getLessRecentJSONdata helper fxn):  ",
-      //   assembledURLhtm
-      // ); // REMOVE
 
       subArrOfassembledURLs.push(assembledURLhtm);
     }
