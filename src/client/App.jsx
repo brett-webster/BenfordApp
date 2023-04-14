@@ -3,6 +3,7 @@ import { Route, Routes } from "react-router-dom";
 import LandingPage from "./components/LandingPage.jsx";
 import LogIn from "./components/LogIn.jsx";
 import SignUp from "./components/SignUp.jsx";
+import ChangePassword from "./components/ChangePassword.jsx";
 import MainPage from "./components/MainPage.jsx";
 
 export const chartDisplayContext = createContext("contextAPI!"); // Added for useContext hook, export required
@@ -19,6 +20,7 @@ const App = () => {
           <Route exact path="/" element={<LandingPage />} />
           <Route path="/login" element={<LogIn />} />
           <Route path="/signup" element={<SignUp />} />
+          <Route path="/changepassword" element={<ChangePassword />} />
           <Route
             path="/main"
             element={

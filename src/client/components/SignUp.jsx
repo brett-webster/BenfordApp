@@ -135,6 +135,8 @@ const SignUp = () => {
         </div>
         <br></br>
         <Link to="/login">Already have an account? Log In here...</Link>
+        <br></br>
+        <Link to="/changepassword">Change password here</Link>
       </div>
     </>
   );

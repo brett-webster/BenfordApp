@@ -61,6 +61,16 @@ app.get("/api/logout", userController.logUserOut, (req, res) => {
   return res.status(200).json(req.cookies);
 });
 
+// Change password endpoint
+app.post(
+  "/api/changepassword",
+  userController.changepasswordFirstCompareBcrypt,
+  userController.changepasswordFinalStepHashNewPassword,
+  (req, res, next) => {
+    return res.status(200).json(res.locals.newdbObject);
+  }
+);
+
 // -----------
 
 // Endpoint for client to grab CompanyCIKtickerList for autocomplete

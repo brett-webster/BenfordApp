@@ -97,6 +97,8 @@ const LogIn = () => {
         </div>
         <br></br> <br></br>
         <Link to="/signup">Sign up here to create an account</Link>
+        <br></br>
+        <Link to="/changepassword">Change password here...</Link>
       </div>
     </>
   );

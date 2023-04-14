@@ -165,4 +165,76 @@ userController.logInFinalStepAndSetCookie = (req, res, next) => {
 
 // --------
 
+userController.changepasswordFirstCompareBcrypt = async (req, res, next) => {
+  const { username, currentPassword } = req.body.currentUser; // destructure req.body object sent from client
+
+  // Full path needed here, async not needed
+  const dbObjectString = fs.readFileSync(
+    path.resolve(__dirname, "./db.json"),
+    "utf-8"
+  );
+  const dbObject = JSON.parse(dbObjectString);
+  res.locals.dbObject = dbObject;
+
+  // Below logic assumes all usernames possess a hashed password
+  if (dbObject[username]) {
+    // Compare untouched password input by user for login vs. bcrypt-decrypted password from db, returning boolean = true if match
+    const hashedPasswordMatch = await bcrypt.compare(
+      currentPassword,
+      dbObject[username][2]
+    );
+    console.log(
+      "Bcrypt-hashed results of user input (password change) match DB?  ",
+      hashedPasswordMatch
+    );
+    res.locals.hashedPasswordMatch = hashedPasswordMatch;
+    return next();
+  } else {
+    console.log("INVALID Username");
+    // Send message back to client -- not truly successful, but needed to convey error back from server-side
+    return res.status(200).json("INVALID Username");
+  }
+};
+
+// --------
+
+userController.changepasswordFinalStepHashNewPassword = async (
+  req,
+  res,
+  next
+) => {
+  const { username, newPassword } = req.body.currentUser; // destructure req.body object sent from client
+  const { hashedPasswordMatch, dbObject } = res.locals;
+
+  // If current password input matches decrypted password in db (AND username + matching new passwords are kosher as validated in prior steps), apply bcrypt hashing to new password & update db w/ it
+  if (hashedPasswordMatch) {
+    const SALT_WORK_FACTOR = 10;
+    const hashedPassword = await bcrypt.hash(newPassword, SALT_WORK_FACTOR);
+    console.log(
+      "HashedPass (updated password): ",
+      newPassword,
+      " <==> ",
+      hashedPassword
+    );
+
+    const email = dbObject[username][0];
+    // Write updated user data into dbObject
+    const newdbObject = {
+      ...dbObject,
+      [username]: [email, newPassword, hashedPassword, ["CIKs"]],
+    };
+    res.locals.newdbObject = newdbObject;
+    const newdbObjectString = JSON.stringify(newdbObject);
+    fs.writeFileSync(path.resolve(__dirname, "./db.json"), newdbObjectString);
+
+    return next();
+  } else {
+    console.log("INVALID Current Password");
+    // Send message back to client -- not truly successful, but needed to convey error back from server-side
+    return res.status(200).json("INVALID Current Password");
+  }
+};
+
+// --------
+
 module.exports = userController;
