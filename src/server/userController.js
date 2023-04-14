@@ -1,33 +1,44 @@
 const fs = require("fs");
 const path = require("path");
+// Cookie parser needs only be present in server.js (parent)
 
 const userController = {};
 
 // --------
 
 userController.isLoggedIn = (req, res, next) => {
-  // REVISE THIS
   // IF LOGGED IN (i.e. there is cookie), TAKE USER DIRECTLY TO MAIN PAGE IF THEY DIRECTLY KEY IN /signup OR /login ENDPOINTS
-  // IF LOGGED IN, SAVE USERS SEARCH INPUTS & RESULTS to db FOR FUTURE RETRIEVAL
-  // IN LATER VERSION, ONLY ALLOW ACCESS TO THIS SEARCH HISTORY & RESULTS BASED ON isLoggedIn STATUS (BOTH VIA MOUSECLICK & URL DIRECTLY KEYED IN)
-  //   if (loggedInBoolean) {
+  // ** IF LOGGED IN (check for cookie @ beg of "/api/inputAndReturnData" endpoint's middleware), SAVE USERS SEARCH INPUTS & RESULTS to db FOR FUTURE RETRIEVAL
+  // ** IN LATER VERSION, ONLY ALLOW ACCESS TO THIS SEARCH HISTORY & RESULTS BASED ON isLoggedIn STATUS (BOTH VIA MOUSECLICK & URL DIRECTLY KEYED IN)
+  if (req.cookies.ssid) res.locals.loggedInStatus = true;
+  else res.locals.loggedInStatus = false;
+  //   console.log("Req cookies: ", req.cookies);
+  //   console.log("res.locals.loggedInStatus", res.locals.loggedInStatus);
+
+  // NOTE:  BELOW IS NOT NEEDED as redirects HAPPEN ON CLIENT-SIDE USING navigate("/main");
+  // If logged in (as denoted by cookie present on client-side), redirect to MAIN
+  // If NOT logged in, proceed to next middleware fxn (i.e. signUp OR logIn)
+  //   if (res.locals.loggedInStatus) {
   //     let PORT;
   //     if (process.env.NODE_ENV === "production") PORT = 3000;
-  //     else port = 8080;
-
+  //     else PORT = 8080;
+  //     console.log("INSIDE"); // REMOVE
   //     return next({
   //       log: "userController.isLoggedIn:  Middleware redirecting to Main page since user already logged in -- no need to sign up OR log in",
-  //       err: { type: "redirect", url: `http://localhost:${PORT}/main` },
+  //       type: "redirect",
+  //       url: `http://localhost:${PORT}/api/main`,
   //     });
   //   } else return next();
-  return next(); // TEMP
+  return next();
 };
 
 // --------
 
 userController.logUserOut = (req, res, next) => {
-  // UPDATE THIS BY REMOVING COOKIE - CURRENTLY UNUSED
-  // return next(); // TEMP
+  // 'Delete' cookie present by resetting to "" so NOT auto-logged back in on redirect
+  res.cookie("ssid", "", { httpOnly: true, secure: false });
+  //   console.log("Cookies pre-logout: ", req.cookies.ssid);  // NOTE:  resetting res.cookie here will NOT change req.cookies UNTIL next req/res cycle complete
+  return next();
 };
 
 // --------
@@ -63,6 +74,15 @@ userController.signUp = (req, res, next) => {
 
     const newdbObjectString = JSON.stringify(newdbObject);
     fs.writeFileSync(path.resolve(__dirname, "./db.json"), newdbObjectString);
+
+    // Create and save cookie on successful signup
+    // const expiresIn = 60 * 60 * 24 * 1 * 1000;  // 1 DAY --> seconds, minutes, hrs, days (ms)
+    const expiresIn = 60 * 10 * 1 * 1 * 1000; // 10min
+    res.cookie("ssid", username, {
+      httpOnly: true,
+      secure: false,
+      maxAge: expiresIn,
+    });
     return next();
   }
 };
@@ -81,6 +101,14 @@ userController.logIn = (req, res, next) => {
 
   if (dbObject[username] && dbObject[username][1] === password) {
     console.log("VALID login credentials");
+    // Create and save cookie on successful login (expires in 1 day)
+    // const expiresIn = 60 * 60 * 24 * 1 * 1000;  // 1 DAY --> seconds, minutes, hrs, days (ms)
+    const expiresIn = 60 * 10 * 1 * 1 * 1000; // 10min
+    res.cookie("ssid", username, {
+      httpOnly: true,
+      secure: false,
+      maxAge: expiresIn,
+    });
     return next();
   } else {
     console.log("INVALID Username/Password");

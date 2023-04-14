@@ -1,6 +1,7 @@
 import React, { useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import "../style.css";
+import axios from "axios";
 import benfordAppLogo from "../BenfordAppLogo.png";
 import { chartDisplayContext } from "../App.jsx"; // ADDED for useContext hook
 
@@ -22,6 +23,12 @@ const Navbar = ({ currentPagePath, setChartDisplayBoolean, isProcessing }) => {
   function logoutHandler() {
     document.getElementById("chartHanger").style.display = "none";
     setChartDisplayBoolean(false); // Set state here to remove CLEAR RESULTS button, tied to useContext API
+
+    // Remove user cookie so user no longer flagged as logged in (for auto-redirect purposes)
+    (async () => {
+      const response = await axios.get("/api/logout");
+      console.log("response.data (req.cookies):  ", response.data);
+    })();
   }
 
   return (

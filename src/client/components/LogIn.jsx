@@ -13,6 +13,13 @@ const LogIn = () => {
   const currentPage = useLocation();
   let currentPagePath = currentPage.pathname;
 
+  // Redirect straight to /main if already logged in (i.e. cookie present)
+  (async () => {
+    const response = await axios.get("/api/login");
+    console.log("response.data:  ", response.data);
+    if (response.data) navigate("/main"); // Send user to main page if already logged in (i.e. cookie is present & res.locals.loggedInStatus === true)
+  })();
+
   const charChangeHandler = (event) => {
     const { name, value } = event.target; // destructure event object
     setUser({ ...user, [name]: value }); // overwrite latest version of user w/ latest keystroke change

@@ -8,6 +8,9 @@ const getLessRecentJSONdata = require("./getLessRecentJSONdata.js"); // Pass in 
 
 app.use(express.json());
 
+const cookieParser = require("cookie-parser"); // Cookie parser required to be present in server.js
+app.use(cookieParser());
+
 // -----------
 
 // Below is for production mode only
@@ -25,25 +28,28 @@ if (process.env.NODE_ENV === "production") {
 
 // -----------
 
-// SignUp endpoint
-app.post(
-  "/api/signup",
-  userController.isLoggedIn,
-  userController.signUp,
-  (req, res, next) => {
-    return res.status(200).json(res.locals.newdbObject);
-  }
-);
+// SignUp endpoints
+app.get("/api/signup", userController.isLoggedIn, (req, res, next) => {
+  return res.status(200).json(res.locals.loggedInStatus);
+});
 
-// Login endpoint
-app.post(
-  "/api/login",
-  userController.isLoggedIn,
-  userController.logIn,
-  (req, res) => {
-    return res.status(200).json(req.body);
-  }
-);
+app.post("/api/signup", userController.signUp, (req, res, next) => {
+  return res.status(200).json(res.locals.newdbObject);
+});
+
+// Login endpoints
+app.get("/api/login", userController.isLoggedIn, (req, res, next) => {
+  return res.status(200).json(res.locals.loggedInStatus);
+});
+
+app.post("/api/login", userController.logIn, (req, res) => {
+  return res.status(200).json(req.body.newUser);
+});
+
+// Logout endpoint
+app.get("/api/logout", userController.logUserOut, (req, res) => {
+  return res.status(200).json(req.cookies);
+});
 
 // -----------
 
@@ -99,11 +105,14 @@ app.use((err, req, res, next) => {
     status: 500,
     message: { err: "An error occurred" },
   };
-  if (err.type === "redirect") {
-    res.redirect(err.url);
-  }
+  // NOTE:  BELOW IS NOT NEEDED as redirects HAPPEN ON CLIENT-SIDE USING navigate("/main");
+  // console.log('err.type === "redirect"', err.type === "redirect", err.url); // REMOVE
+  // if (err.type === "redirect") {
+  //   return res.redirect(err.url); // '/api/main' ??
+  // }
   const errorObj = Object.assign({}, defaultErr, err);
   console.log(errorObj.log);
+  console.log("IN Global Err Handler:  ", errorObj.type, errorObj.url); // REMOVE
   return res.status(errorObj.status).json(errorObj.message);
 });
 
