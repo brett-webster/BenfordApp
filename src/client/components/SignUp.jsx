@@ -51,7 +51,7 @@ const SignUp = () => {
     else {
       (async () => {
         const response = await axios.post("/api/signup", { newUser });
-        if (response.data === "DUPLICATE USERNAME") {
+        if (response.data === "DUPLICATE Username") {
           setUserNameDup(true); // Used as flag for displaying message to user
         } else navigate("/main"); // Send user to main page on successful signup
       })();

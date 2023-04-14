@@ -33,18 +33,28 @@ app.get("/api/signup", userController.isLoggedIn, (req, res, next) => {
   return res.status(200).json(res.locals.loggedInStatus);
 });
 
-app.post("/api/signup", userController.signUp, (req, res, next) => {
-  return res.status(200).json(res.locals.newdbObject);
-});
+app.post(
+  "/api/signup",
+  userController.signUpCheckDupsAndBcrypt,
+  userController.signUpWriteToDBandSetCookie,
+  (req, res, next) => {
+    return res.status(200).json(res.locals.newdbObject);
+  }
+);
 
 // Login endpoints
 app.get("/api/login", userController.isLoggedIn, (req, res, next) => {
   return res.status(200).json(res.locals.loggedInStatus);
 });
 
-app.post("/api/login", userController.logIn, (req, res) => {
-  return res.status(200).json(req.body.newUser);
-});
+app.post(
+  "/api/login",
+  userController.logInConfirmingBcryptMatchFirst,
+  userController.logInFinalStepAndSetCookie,
+  (req, res) => {
+    return res.status(200).json(req.body.newUser);
+  }
+);
 
 // Logout endpoint
 app.get("/api/logout", userController.logUserOut, (req, res) => {
@@ -105,11 +115,6 @@ app.use((err, req, res, next) => {
     status: 500,
     message: { err: "An error occurred" },
   };
-  // NOTE:  BELOW IS NOT NEEDED as redirects HAPPEN ON CLIENT-SIDE USING navigate("/main");
-  // console.log('err.type === "redirect"', err.type === "redirect", err.url); // REMOVE
-  // if (err.type === "redirect") {
-  //   return res.redirect(err.url); // '/api/main' ??
-  // }
   const errorObj = Object.assign({}, defaultErr, err);
   console.log(errorObj.log);
   console.log("IN Global Err Handler:  ", errorObj.type, errorObj.url); // REMOVE

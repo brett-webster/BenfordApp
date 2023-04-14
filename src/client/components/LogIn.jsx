@@ -32,7 +32,10 @@ const LogIn = () => {
     // Send user login data to server for processing...
     (async () => {
       const response = await axios.post("/api/login", { user });
-      if (response.data === "INVALID Username/Password") {
+      if (
+        response.data === "INVALID Username" ||
+        response.data === "INVALID Password"
+      ) {
         setuserANDpasswordMatch(false); // Used as flag for  message that username/password combo is invalid
       } else navigate("/main"); // Send user to main page on successful login
     })();
