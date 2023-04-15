@@ -38,7 +38,7 @@ const MainPage = ({ setChartDisplayBoolean }) => {
   const [autocompleteState, setAutocompleteState] = useState(
     initialAutocompleteState
   );
-  const [isProcessing, setIsProcessing] = useState(false); // ADDED 4/13 for spinner
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // ADDED for useContext hook, pulling it in to access here
   const chartDisplayBoolean = useContext(chartDisplayContext);
@@ -137,12 +137,12 @@ const MainPage = ({ setChartDisplayBoolean }) => {
       // ABOVE COVERS VALID CIK BUT THAT LACKS FILINGS AND ALSO VALID CIK W/ FILINGS BUT NO NUMBERS THEREIN; LASTLY, COVERS BAD CIK (BUT THIS IS NOT RELEVANT SINCE PRE-FILTERED)
       // IN ABOVE CASE, DO NOT OUTPUT CHART, ONLY OUTPUT EMPTY RESULTS
       // Send input data to server for processing & response...
-      setIsProcessing(true); // ADDED 4/13 for spinner -- Turn ON spinner
+      setIsProcessing(true);
       (async () => {
         const response = await axios.post("/api/inputAndReturnData", {
           inputObject,
         });
-        setIsProcessing(false); // ADDED 4/13 for spinner -- Turn OFF spinner)
+        setIsProcessing(false);
         if (response.data.outputDataIsEmptyBoolean) {
           setOutputArrayEmptyBoolean(true); // Used as flag for message that outputArr contains no digits
         } else {
@@ -187,7 +187,7 @@ const MainPage = ({ setChartDisplayBoolean }) => {
       <Navbar
         currentPagePath={currentPagePath}
         setChartDisplayBoolean={setChartDisplayBoolean}
-        isProcessing={isProcessing} // ADDED 4/13 to accomodate loading spinner
+        isProcessing={isProcessing}
       />
       <div id="companyAndDateFormSubmitContainer">
         <img

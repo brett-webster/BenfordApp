@@ -16,7 +16,6 @@ const LogIn = () => {
   // Redirect straight to /main if already logged in (i.e. cookie present)
   (async () => {
     const response = await axios.get("/api/login");
-    console.log("response.data:  ", response.data);
     if (response.data) navigate("/main"); // Send user to main page if already logged in (i.e. cookie is present & res.locals.loggedInStatus === true)
   })();
 
@@ -89,7 +88,7 @@ const LogIn = () => {
         <Link to="/main">
           <button className="nonNavBtn">CONTINUE AS GUEST</button>
         </Link>
-        <br></br>
+        <br></br> <br></br>
         <div style={{ color: "red" }}>
           {!userANDpasswordMatch
             ? "Username and/or password invalid - PLEASE TRY AGAIN"

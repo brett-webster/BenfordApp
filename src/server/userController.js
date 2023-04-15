@@ -1,4 +1,5 @@
 const fs = require("fs");
+const db = require("./postgreSQLmodel.js");
 const path = require("path");
 const bcrypt = require("bcryptjs");
 
@@ -26,21 +27,31 @@ userController.logUserOut = (req, res, next) => {
 // --------
 
 userController.signUpCheckDupsAndBcrypt = async (req, res, next) => {
-  const { email, username, password } = req.body.newUser; // destructure req.body object sent from client
+  const { username, password } = req.body.newUser; // destructure req.body object sent from client
 
   // Test whether duplicate username -- if so, send message back
   // Read from current 'database' file; compare vs. input username (assuming this to be unique ID since need to pick btwn username/email)
   // If not duplicate username, add to database in next middleware fxn (cached object w/ username as key & array [email, password] as value)
 
-  // Reading in db to dbObject variable
-  const dbObjectString = fs.readFileSync(
-    path.resolve(__dirname, "./db.json"),
-    "utf-8"
-  );
-  const dbObject = JSON.parse(dbObjectString);
-  res.locals.dbObject = dbObject;
+  // REMOVE TEMP db CODE BELOW
+  //   // Reading in db to dbObject variable
+  //   const dbObjectString = fs.readFileSync(
+  //     path.resolve(__dirname, "./db.json"),
+  //     "utf-8"
+  //   );
+  //   const dbObject = JSON.parse(dbObjectString);
+  //   res.locals.dbObject = dbObject;
 
-  if (dbObject[username]) {
+  // Query (READ) whether username present in SQL db
+  const findUserQuery = `
+    SELECT * FROM users
+    WHERE username = $1;
+  `;
+  const values = [username];
+  const usernameResultFromDB = await db.query(findUserQuery, values);
+  console.log("User found (signup):  ", usernameResultFromDB.rows[0]);
+
+  if (usernameResultFromDB.rows[0]) {
     // Dup username, return error
     console.log(
       "Username dup, end middleware chain here & send message back to client"
@@ -68,22 +79,36 @@ userController.signUpCheckDupsAndBcrypt = async (req, res, next) => {
 
 // --------
 
-userController.signUpWriteToDBandSetCookie = (req, res, next) => {
-  const { email, username, password } = req.body.newUser; // destructure req.body object sent from client
-  const { hashedPassword, dbObject } = res.locals;
+userController.signUpWriteToDBandSetCookie = async (req, res, next) => {
+  const { email, username } = req.body.newUser; // destructure req.body object sent from client
+  const { hashedPassword } = res.locals;
 
   try {
     console.log(
       "Not a dup; save new user data to DB & proceed to next middleware"
     );
-    // Write new userName into dbObject
-    const newdbObject = {
-      ...dbObject,
-      [username]: [email, password, hashedPassword, ["CIKs"]],
-    };
+    // REMOVE TEMP db CODE BELOW
+    // // Write new userName into dbObject
+    // const newdbObject = {
+    //   ...dbObject,
+    //   [username]: [email, password, hashedPassword, ["CIKs"]],
+    // };
 
-    const newdbObjectString = JSON.stringify(newdbObject);
-    fs.writeFileSync(path.resolve(__dirname, "./db.json"), newdbObjectString);
+    // const newdbObjectString = JSON.stringify(newdbObject);
+    // fs.writeFileSync(path.resolve(__dirname, "./db.json"), newdbObjectString);
+
+    console.log("User info to INSERT:  ", username, hashedPassword, email);
+
+    // Add (CREATE) newly signed up user into SQL db
+    const createUserQuery = `
+        INSERT INTO users
+        (username, hashedpassword, email)
+        VALUES ($1, $2, $3)
+        RETURNING *;
+    `;
+    const values = [username, hashedPassword, email];
+    const createUserQueryResults = await db.query(createUserQuery, values);
+    console.log("NEW user created (signup):  ", createUserQueryResults.rows[0]);
 
     // Create and save cookie on successful signup
     // const expiresIn = 60 * 60 * 24 * 1 * 1000;  // 1 DAY --> seconds, minutes, hrs, days (ms)
@@ -109,20 +134,30 @@ userController.signUpWriteToDBandSetCookie = (req, res, next) => {
 userController.logInConfirmingBcryptMatchFirst = async (req, res, next) => {
   const { username, password } = req.body.user; // destructure req.body object sent from client
 
-  // Full path needed here, async not needed
-  const dbObjectString = fs.readFileSync(
-    path.resolve(__dirname, "./db.json"),
-    "utf-8"
-  );
-  const dbObject = JSON.parse(dbObjectString);
-  res.locals.dbObject = dbObject;
+  // REMOVE TEMP db CODE BELOW
+  //   // Full path needed here, async not needed
+  //   const dbObjectString = fs.readFileSync(
+  //     path.resolve(__dirname, "./db.json"),
+  //     "utf-8"
+  //   );
+  //   const dbObject = JSON.parse(dbObjectString);
+  //   res.locals.dbObject = dbObject;
+
+  // Query (READ) whether username present in SQL db
+  const findUserQuery = `
+    SELECT * FROM users
+    WHERE username = $1;
+  `;
+  const values = [username];
+  const usernameResultFromDB = await db.query(findUserQuery, values);
+  console.log("User found (login):  ", usernameResultFromDB.rows[0]);
 
   // Below logic assumes all usernames possess a hashed password
-  if (dbObject[username]) {
+  if (usernameResultFromDB.rows[0]) {
     // Compare untouched password input by user for login vs. bcrypt-decrypted password from db, returning boolean = true if match
     const hashedPasswordMatch = await bcrypt.compare(
       password,
-      dbObject[username][2]
+      usernameResultFromDB.rows[0].hashedpassword
     );
     console.log(
       "Bcrypt-hashed results of user input match DB?  ",
@@ -140,12 +175,11 @@ userController.logInConfirmingBcryptMatchFirst = async (req, res, next) => {
 // --------
 
 userController.logInFinalStepAndSetCookie = (req, res, next) => {
-  const { username, password } = req.body.user; // destructure req.body object sent from client
-  const { hashedPasswordMatch, dbObject } = res.locals;
+  const { username } = req.body.user; // destructure req.body object sent from client
+  const { hashedPasswordMatch } = res.locals;
 
-  //  if (dbObject[username] && dbObject[username][1] === password) {  // OLD --> previously matched unhashed passwords
-  // Check whether input credentials match
-  if (dbObject[username] && hashedPasswordMatch) {
+  // Check whether input password matches hashed password in db (previously confirmed username IS found)
+  if (hashedPasswordMatch) {
     console.log("VALID login credentials");
     // Create and save cookie on successful login (expires in 1 day)
     // const expiresIn = 60 * 60 * 24 * 1 * 1000;  // 1 DAY --> seconds, minutes, hrs, days (ms)
@@ -168,26 +202,40 @@ userController.logInFinalStepAndSetCookie = (req, res, next) => {
 userController.changepasswordFirstCompareBcrypt = async (req, res, next) => {
   const { username, currentPassword } = req.body.currentUser; // destructure req.body object sent from client
 
-  // Full path needed here, async not needed
-  const dbObjectString = fs.readFileSync(
-    path.resolve(__dirname, "./db.json"),
-    "utf-8"
+  // REMOVE TEMP db CODE BELOW
+  //   // Full path needed here, async not needed
+  //   const dbObjectString = fs.readFileSync(
+  //     path.resolve(__dirname, "./db.json"),
+  //     "utf-8"
+  //   );
+  //   const dbObject = JSON.parse(dbObjectString);
+  //   res.locals.dbObject = dbObject;
+
+  // Query (READ) whether username present in SQL db
+  const findUserQuery = `
+    SELECT * FROM users
+    WHERE username = $1;
+  `;
+  const values = [username];
+  const usernameResultFromDB = await db.query(findUserQuery, values);
+  console.log(
+    "Username found (changepassword):  ",
+    usernameResultFromDB.rows[0]
   );
-  const dbObject = JSON.parse(dbObjectString);
-  res.locals.dbObject = dbObject;
 
   // Below logic assumes all usernames possess a hashed password
-  if (dbObject[username]) {
+  if (usernameResultFromDB.rows[0]) {
     // Compare untouched password input by user for login vs. bcrypt-decrypted password from db, returning boolean = true if match
     const hashedPasswordMatch = await bcrypt.compare(
       currentPassword,
-      dbObject[username][2]
+      usernameResultFromDB.rows[0].hashedpassword
     );
     console.log(
       "Bcrypt-hashed results of user input (password change) match DB?  ",
       hashedPasswordMatch
     );
     res.locals.hashedPasswordMatch = hashedPasswordMatch;
+    res.locals.email = usernameResultFromDB.rows[0].email;
     return next();
   } else {
     console.log("INVALID Username");
@@ -204,7 +252,7 @@ userController.changepasswordFinalStepHashNewPassword = async (
   next
 ) => {
   const { username, newPassword } = req.body.currentUser; // destructure req.body object sent from client
-  const { hashedPasswordMatch, dbObject } = res.locals;
+  const { hashedPasswordMatch, email } = res.locals;
 
   // If current password input matches decrypted password in db (AND username + matching new passwords are kosher as validated in prior steps), apply bcrypt hashing to new password & update db w/ it
   if (hashedPasswordMatch) {
@@ -217,15 +265,37 @@ userController.changepasswordFinalStepHashNewPassword = async (
       hashedPassword
     );
 
-    const email = dbObject[username][0];
-    // Write updated user data into dbObject
-    const newdbObject = {
-      ...dbObject,
-      [username]: [email, newPassword, hashedPassword, ["CIKs"]],
+    // Query to UPDATE user password in SQL db
+    const updateUserPasswordQuery = `
+        UPDATE users
+        SET hashedpassword = $2
+        WHERE username = $1
+        RETURNING *;
+    `;
+    const values = [username, hashedPassword];
+    // const updateUserPasswordResultsFromDB = await db.query(
+    const { rows } = await db.query(updateUserPasswordQuery, values);
+    console.log(
+      "Password update final status (changepassword):  ",
+      //   updateUserPasswordResultsFromDB.rows[0]
+      rows[0]
+    );
+
+    res.locals.newdbObject = {
+      [username]: [username, newPassword, hashedPassword, email],
     };
-    res.locals.newdbObject = newdbObject;
-    const newdbObjectString = JSON.stringify(newdbObject);
-    fs.writeFileSync(path.resolve(__dirname, "./db.json"), newdbObjectString);
+    console.log("res.locals.newdbObject:  ", res.locals.newdbObject);
+
+    // REMOVE TEMP db CODE BELOW
+    // const email = dbObject[username][0];
+    // // Write updated user data into dbObject
+    // const newdbObject = {
+    //   ...dbObject,
+    //   [username]: [email, newPassword, hashedPassword, ["CIKs"]],
+    // };
+    // res.locals.newdbObject = newdbObject;
+    // const newdbObjectString = JSON.stringify(newdbObject);
+    // fs.writeFileSync(path.resolve(__dirname, "./db.json"), newdbObjectString);
 
     return next();
   } else {

@@ -62,7 +62,6 @@ const ChangePassword = () => {
         // Otherwise passwordChangeAccepted remains set to false AND error message displayed on screen
         else {
           setPasswordChangeAccepted(false); // Used as flag for displaying message to user
-          console.log("Error in changing password:  ", response.data);
         }
       })();
     }
@@ -76,11 +75,6 @@ const ChangePassword = () => {
       newPasswordConfirm: "",
     });
   }
-
-  // TESTING ONLY - REMOVE
-  useEffect(() => {
-    console.log("newUserObject:  ", typeof newUserObject, newUserObject);
-  }, [newUserObject]);
 
   return (
     <>
@@ -148,7 +142,7 @@ const ChangePassword = () => {
             ? "Some information is INCORRECT - PLEASE TRY AGAIN"
             : ""}
         </div>
-        <div style={{ color: "red" }}>
+        <div style={{ color: "blue" }}>
           {typeof newUserObject === "object"
             ? "Password Successfully UPDATED, please proceed to Log In..."
             : ""}

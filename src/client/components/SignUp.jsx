@@ -22,7 +22,6 @@ const SignUp = () => {
   // Redirect straight to /main if already logged in (i.e. cookie present)
   (async () => {
     const response = await axios.get("/api/signup");
-    console.log("response.data:  ", response.data);
     if (response.data) navigate("/main"); // Send user to main page if already logged in (i.e. cookie is present & res.locals.loggedInStatus === true)
   })();
 
@@ -128,7 +127,7 @@ const SignUp = () => {
         <div style={{ color: "red" }}>
           {!passwordMatch ? "Password mismatch - PLEASE TRY AGAIN" : ""}
         </div>
-        <div style={{ color: "blue" }}>
+        <div style={{ color: "red" }}>
           {userNameDup
             ? "Duplicate username found in database - PLEASE TRY AGAIN"
             : ""}

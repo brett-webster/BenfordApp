@@ -27,7 +27,7 @@ const Navbar = ({ currentPagePath, setChartDisplayBoolean, isProcessing }) => {
     // Remove user cookie so user no longer flagged as logged in (for auto-redirect purposes)
     (async () => {
       const response = await axios.get("/api/logout");
-      console.log("response.data (req.cookies):  ", response.data);
+      //   console.log("response.data (req.cookies):  ", response.data);
     })();
   }
 
