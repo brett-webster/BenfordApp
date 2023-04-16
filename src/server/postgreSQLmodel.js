@@ -52,6 +52,16 @@ module.exports = {
 
 // DROP TABLE <tablename>
 
+// NOTE:  username_id = Foreign key
+// CREATE TABLE searchresults (
+//     id SERIAL PRIMARY KEY,
+//     cikplusdaterange VARCHAR NOT NULL,
+//     user_id INTEGER REFERENCES users (id) NOT NULL,
+//     outputobject TEXT NOT NULL
+//     );
+
+// ALTER TABLE searchresults RENAME TO pastresults;
+
 // --------------
 
 // CRUD (for CLI & ElephantSQL; JS syntax slightly different)
@@ -74,3 +84,11 @@ module.exports = {
 // DELETE FROM users <-- deletes ALL rows (but NOT table itself)
 // DELETE FROM users WHERE username='fred;  // single
 // DELETE FROM users WHERE email IN ('Tom.com', 'Fred.com');  // multiple
+
+// --------------
+
+// JOIN TABLE RESULTS (on user id #)
+
+// SELECT pastresults.id AS pastresults_id, users.id AS users_id, username, cikplusdaterange, outputobject, hashedpassword, email FROM pastresults
+// LEFT JOIN users ON users.id = user_id
+// WHERE users.id = 11;

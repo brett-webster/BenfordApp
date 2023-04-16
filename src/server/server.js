@@ -90,22 +90,17 @@ app.get("/api/getCompanyCIKtickerList", (req, res) => {
 app.post(
   "/api/inputAndReturnData",
   processDataController.importValidFinancialLineItemsObject,
+  processDataController.firstCheckDBforDupPastResults,
   processDataController.getMostRecentJSONdataAndReturn,
   processDataController.createLessRecentURLsAndGrabJSON(getLessRecentJSONdata), // <--- Parameterizing middleware fxn to accomodate helper fxn
   processDataController.fetchAllURLsInTxtFormat,
   processDataController.iterateThruDOMsOfFinalURLarrAndParse,
   processDataController.compressOutputArrs,
   processDataController.calculateAndDisplayBenfordResults,
+  processDataController.writeResultsToDB,
   (req, res) => {
     // ONLY need to return outputObject to client, NOT entirety of data accumulated by res.locals object during middleware chain
-    const { company, ticker, CIK, startDate, endDate } = req.body.inputObject; // destructure req.body object originally sent from client
     const { outputObject } = res.locals; // destructure
-
-    outputObject.company = company;
-    outputObject.ticker = ticker;
-    outputObject.CIK = CIK;
-    outputObject.startDate = startDate;
-    outputObject.endDate = endDate;
 
     console.log("outputObject:  ", outputObject);
     return res.status(200).json(outputObject);

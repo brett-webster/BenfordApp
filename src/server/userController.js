@@ -9,8 +9,6 @@ const userController = {};
 
 userController.isLoggedIn = (req, res, next) => {
   // IF LOGGED IN (i.e. there is cookie), TAKE USER DIRECTLY TO MAIN PAGE IF THEY DIRECTLY KEY IN /signup OR /login ENDPOINTS
-  // ** IF LOGGED IN (check for cookie @ beg of "/api/inputAndReturnData" endpoint's middleware), SAVE USERS SEARCH INPUTS & RESULTS to db FOR FUTURE RETRIEVAL
-  // ** IN LATER VERSION, ONLY ALLOW ACCESS TO THIS SEARCH HISTORY & RESULTS BASED ON isLoggedIn STATUS (BOTH VIA MOUSECLICK & URL DIRECTLY KEYED IN)
   if (req.cookies.ssid) res.locals.loggedInStatus = true;
   else res.locals.loggedInStatus = false;
   return next();
@@ -30,17 +28,8 @@ userController.signUpCheckDupsAndBcrypt = async (req, res, next) => {
   const { username, password } = req.body.newUser; // destructure req.body object sent from client
 
   // Test whether duplicate username -- if so, send message back
-  // Read from current 'database' file; compare vs. input username (assuming this to be unique ID since need to pick btwn username/email)
-  // If not duplicate username, add to database in next middleware fxn (cached object w/ username as key & array [email, password] as value)
-
-  // REMOVE TEMP db CODE BELOW
-  //   // Reading in db to dbObject variable
-  //   const dbObjectString = fs.readFileSync(
-  //     path.resolve(__dirname, "./db.json"),
-  //     "utf-8"
-  //   );
-  //   const dbObject = JSON.parse(dbObjectString);
-  //   res.locals.dbObject = dbObject;
+  // Read from db; compare vs. input username (assuming this to be unique ID since need to pick btwn username/email)
+  // If not duplicate username, add to db in next middleware fxn (cached object w/ username as key & array [email, password] as value)
 
   // Query (READ) whether username present in SQL db
   const findUserQuery = `
@@ -48,10 +37,10 @@ userController.signUpCheckDupsAndBcrypt = async (req, res, next) => {
     WHERE username = $1;
   `;
   const values = [username];
-  const usernameResultFromDB = await db.query(findUserQuery, values);
-  console.log("User found (signup):  ", usernameResultFromDB.rows[0]);
+  const { rows } = await db.query(findUserQuery, values);
+  console.log("User found (signup):  ", rows[0]);
 
-  if (usernameResultFromDB.rows[0]) {
+  if (rows[0]) {
     // Dup username, return error
     console.log(
       "Username dup, end middleware chain here & send message back to client"
@@ -87,15 +76,6 @@ userController.signUpWriteToDBandSetCookie = async (req, res, next) => {
     console.log(
       "Not a dup; save new user data to DB & proceed to next middleware"
     );
-    // REMOVE TEMP db CODE BELOW
-    // // Write new userName into dbObject
-    // const newdbObject = {
-    //   ...dbObject,
-    //   [username]: [email, password, hashedPassword, ["CIKs"]],
-    // };
-
-    // const newdbObjectString = JSON.stringify(newdbObject);
-    // fs.writeFileSync(path.resolve(__dirname, "./db.json"), newdbObjectString);
 
     console.log("User info to INSERT:  ", username, hashedPassword, email);
 
@@ -107,8 +87,8 @@ userController.signUpWriteToDBandSetCookie = async (req, res, next) => {
         RETURNING *;
     `;
     const values = [username, hashedPassword, email];
-    const createUserQueryResults = await db.query(createUserQuery, values);
-    console.log("NEW user created (signup):  ", createUserQueryResults.rows[0]);
+    const { rows } = await db.query(createUserQuery, values);
+    console.log("NEW user created (signup):  ", rows[0]);
 
     // Create and save cookie on successful signup
     // const expiresIn = 60 * 60 * 24 * 1 * 1000;  // 1 DAY --> seconds, minutes, hrs, days (ms)
@@ -134,30 +114,21 @@ userController.signUpWriteToDBandSetCookie = async (req, res, next) => {
 userController.logInConfirmingBcryptMatchFirst = async (req, res, next) => {
   const { username, password } = req.body.user; // destructure req.body object sent from client
 
-  // REMOVE TEMP db CODE BELOW
-  //   // Full path needed here, async not needed
-  //   const dbObjectString = fs.readFileSync(
-  //     path.resolve(__dirname, "./db.json"),
-  //     "utf-8"
-  //   );
-  //   const dbObject = JSON.parse(dbObjectString);
-  //   res.locals.dbObject = dbObject;
-
   // Query (READ) whether username present in SQL db
   const findUserQuery = `
     SELECT * FROM users
     WHERE username = $1;
   `;
   const values = [username];
-  const usernameResultFromDB = await db.query(findUserQuery, values);
-  console.log("User found (login):  ", usernameResultFromDB.rows[0]);
+  const { rows } = await db.query(findUserQuery, values);
+  console.log("User found (login):  ", rows[0]);
 
   // Below logic assumes all usernames possess a hashed password
-  if (usernameResultFromDB.rows[0]) {
+  if (rows[0]) {
     // Compare untouched password input by user for login vs. bcrypt-decrypted password from db, returning boolean = true if match
     const hashedPasswordMatch = await bcrypt.compare(
       password,
-      usernameResultFromDB.rows[0].hashedpassword
+      rows[0].hashedpassword
     );
     console.log(
       "Bcrypt-hashed results of user input match DB?  ",
@@ -202,40 +173,28 @@ userController.logInFinalStepAndSetCookie = (req, res, next) => {
 userController.changepasswordFirstCompareBcrypt = async (req, res, next) => {
   const { username, currentPassword } = req.body.currentUser; // destructure req.body object sent from client
 
-  // REMOVE TEMP db CODE BELOW
-  //   // Full path needed here, async not needed
-  //   const dbObjectString = fs.readFileSync(
-  //     path.resolve(__dirname, "./db.json"),
-  //     "utf-8"
-  //   );
-  //   const dbObject = JSON.parse(dbObjectString);
-  //   res.locals.dbObject = dbObject;
-
   // Query (READ) whether username present in SQL db
   const findUserQuery = `
     SELECT * FROM users
     WHERE username = $1;
   `;
   const values = [username];
-  const usernameResultFromDB = await db.query(findUserQuery, values);
-  console.log(
-    "Username found (changepassword):  ",
-    usernameResultFromDB.rows[0]
-  );
+  const { rows } = await db.query(findUserQuery, values);
+  console.log("Username found (changepassword):  ", rows[0]);
 
   // Below logic assumes all usernames possess a hashed password
-  if (usernameResultFromDB.rows[0]) {
+  if (rows[0]) {
     // Compare untouched password input by user for login vs. bcrypt-decrypted password from db, returning boolean = true if match
     const hashedPasswordMatch = await bcrypt.compare(
       currentPassword,
-      usernameResultFromDB.rows[0].hashedpassword
+      rows[0].hashedpassword
     );
     console.log(
       "Bcrypt-hashed results of user input (password change) match DB?  ",
       hashedPasswordMatch
     );
     res.locals.hashedPasswordMatch = hashedPasswordMatch;
-    res.locals.email = usernameResultFromDB.rows[0].email;
+    res.locals.email = rows[0].email;
     return next();
   } else {
     console.log("INVALID Username");
@@ -273,29 +232,13 @@ userController.changepasswordFinalStepHashNewPassword = async (
         RETURNING *;
     `;
     const values = [username, hashedPassword];
-    // const updateUserPasswordResultsFromDB = await db.query(
     const { rows } = await db.query(updateUserPasswordQuery, values);
-    console.log(
-      "Password update final status (changepassword):  ",
-      //   updateUserPasswordResultsFromDB.rows[0]
-      rows[0]
-    );
+    console.log("Password update final status (changepassword):  ", rows[0]);
 
     res.locals.newdbObject = {
       [username]: [username, newPassword, hashedPassword, email],
     };
     console.log("res.locals.newdbObject:  ", res.locals.newdbObject);
-
-    // REMOVE TEMP db CODE BELOW
-    // const email = dbObject[username][0];
-    // // Write updated user data into dbObject
-    // const newdbObject = {
-    //   ...dbObject,
-    //   [username]: [email, newPassword, hashedPassword, ["CIKs"]],
-    // };
-    // res.locals.newdbObject = newdbObject;
-    // const newdbObjectString = JSON.stringify(newdbObject);
-    // fs.writeFileSync(path.resolve(__dirname, "./db.json"), newdbObjectString);
 
     return next();
   } else {
