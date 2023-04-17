@@ -387,17 +387,6 @@ processDataController.iterateThruDOMsOfFinalURLarrAndParse = async (
               lineItemNameAndNumObject[key] = value;
             } // end inner for loop
           }
-
-          // Tracking heap's dynamic memory allocation to test & avoid 'fatal error' --> "FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory"
-          // const used = process.memoryUsage();
-          // for (let key in used) {
-          //   //   console.log(
-          //   //     `${key} ${Math.round(used[key] / 1024 / 1024 / 1024)} GB`
-          //   //   );
-          //   console.log(
-          //     `${key} ${Math.round((used[key] / 1024 / 1024) * 100) / 100} MB`
-          //   );
-          // }
         } // end outer for loop
         dom.window.close();
 
@@ -612,15 +601,6 @@ processDataController.writeResultsToDB = async (req, res, next) => {
       let username = "guest"; // default = guest
       if (req.cookies.ssid) username = req.cookies.ssid;
       const outputObjectStr = JSON.stringify(outputObject);
-      // TESTING
-      //   console.log("NEW db TABLE:");
-      //   console.log(typeof cikPlusDateRange, cikPlusDateRange);
-      //   console.log(typeof username, username);
-      //   console.log(typeof outputObjectStr, outputObjectStr);
-      //   console.log(
-      //     typeof JSON.parse(outputObjectStr),
-      //     JSON.parse(outputObjectStr)
-      //   );
 
       // Read from db in order to find username id (foreign key in 'pastresults' table)
       let userID;
@@ -651,26 +631,6 @@ processDataController.writeResultsToDB = async (req, res, next) => {
       console.log(
         "Output array is EMPTY, NOT written to 'pastresults' table in db..."
       );
-
-    // // BELOW FOR TESTING ONLY -- REMOVE
-    // // Search db for prior matching results (cached to avoid re-processing)
-    // // const { company, ticker, CIK, startDate, endDate } = req.body.inputObject; // destructure req.body object originally sent from client
-    // const cikPlusDateRangeInput = "XXX";
-    // //   const cikPlusDateRangeInput = CIK + startDate + endDate;
-    // console.log(
-    //   "cikPlusDateRangeInput: ",
-    //   cikPlusDateRangeInput,
-    //   typeof cikPlusDateRangeInput,
-    //   cikPlusDateRangeInput
-    // );
-    // const findPriorMatchingSearchQuery = `
-    //         SELECT * FROM pastresults
-    //         WHERE cikplusdaterange = $1;
-    //     `;
-    // const values = [cikPlusDateRangeInput];
-    // const { rows } = await db.query(findPriorMatchingSearchQuery, values);
-    // const matchingResults = rows[0];
-    // console.log("Matching results found:  ", rows[0], rows[0] === undefined); // undefined if no match
 
     res.locals.outputObject = outputObject; // Assign to res.locals, to be destructured & eventually sent back to client upon successful completion of middleware chain
     console.timeEnd(timeLabel); // Mark time here
